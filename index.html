@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Apitor Robot Studio Kids Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&display=swap');
+        * {
+            font-family: 'Prompt', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #F0FDF4;
+            background-image: radial-gradient(#BBF7D0 1.5px, transparent 1.5px), radial-gradient(#BBF7D0 1.5px, #F0FDF4 1.5px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+        }
+        .btn-chubby {
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+            transition: all 0.1s ease;
+        }
+        .btn-chubby:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+        }
+        .step-active {
+            border: 4px solid #F59E0B !important;
+            transform: scale(1.03);
+            background-color: #FEF3C7 !important;
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.25);
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #E2E8F0; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 9999px; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-12 select-none">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b-4 border-amber-300 shadow-md px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-amber-400 border-2 border-amber-500 flex items-center justify-center shadow-md text-white text-2xl transform rotate-[-3deg]">
+                    🤖
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-xl text-sky-600 flex items-center gap-2">
+                        Apitor Robot Studio
+                        <span id="bleStatusBadge" class="text-xs px-3 py-1 rounded-full bg-rose-100 text-rose-600 border border-rose-300 font-bold">
+                            <i class="fa-solid fa-circle text-[8px] mr-1"></i>ยังไม่เชื่อมหุ่น
+                        </span>
+                    </h1>
+                    <p class="text-xs font-semibold text-slate-500">ห้องควบคุมหุ่นยนต์สุดสนุก & เพื่อน AI ตัวจิ๋ว</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button id="btnSimMode" onclick="toggleSimMode()" class="btn-chubby px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-100 text-amber-700 border-2 border-amber-300 hover:bg-amber-200">
+                    🧪 โหมดจำลอง: เปิด
+                </button>
+                <button id="btnConnectBLE" onclick="connectBluetooth()" class="btn-chubby px-5 py-2.5 rounded-2xl text-xs font-extrabold bg-sky-500 hover:bg-sky-400 text-white border-2 border-sky-600 flex items-center gap-2 shadow-lg shadow-sky-500/30">
+                    <i class="fa-brands fa-bluetooth-b text-sm"></i> ค้นหาหุ่นยนต์
+                </button>
+                <button onclick="requestParentAccess()" class="btn-chubby p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 border-2 border-slate-300" title="ตั้งค่าระบบ (สำหรับผู้ปกครอง)">
+                    <i class="fa-solid fa-gear text-base"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Canvas & Manual Joypad (5 cols) -->
+        <div class="lg:col-span-5 space-y-6">
+
+            <!-- Virtual Robot Canvas -->
+            <div class="bg-white rounded-3xl p-4 border-4 border-sky-200 shadow-xl">
+                <div class="flex items-center justify-between mb-3 px-1">
+                    <h2 class="text-sm font-extrabold text-sky-600 flex items-center gap-2">
+                        <span>🗺️</span> สนามวิ่งเล่นจำลองของหุ่นยนต์
+                    </h2>
+                    <button onclick="resetCanvas()" class="text-xs font-bold text-slate-400 hover:text-sky-500">
+                        <i class="fa-solid fa-rotate-left mr-1"></i>กลับจุดเริ่ม
+                    </button>
+                </div>
+                <div class="relative rounded-2xl overflow-hidden bg-slate-900 border-4 border-slate-700 shadow-inner">
+                    <canvas id="robotCanvas" width="420" height="230" class="w-full h-[210px] block"></canvas>
+                    <div id="robotLedIndicator" class="absolute top-3 right-3 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/90 border-2 border-slate-300 flex items-center gap-2 shadow">
+                        <span id="ledDot" class="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+                        <span id="activeActionText" class="text-slate-700">พร้อมซิ่งแล้ว!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Joypad Controller (Kids Friendly D-Pad) -->
+            <div class="bg-white rounded-3xl p-5 border-4 border-emerald-200 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-extrabold text-emerald-600 flex items-center gap-2">
+                        <span>🎮</span> ปุ่มบังคับทิศทาง Real-time
+                    </h2>
+                    <div class="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                        <span class="text-xs font-bold text-emerald-700">ความเร็ว:</span>
+                        <input id="manualSpeed" type="range" min="20" max="100" value="70" class="w-20 accent-emerald-500 cursor-pointer">
+                        <span id="manualSpeedVal" class="font-extrabold text-emerald-600 text-xs w-8">70%</span>
+                    </div>
+                </div>
+
+                <!-- Joypad Buttons -->
+                <div class="grid grid-cols-3 gap-3 max-w-[260px] mx-auto my-2">
+                    <div></div>
+                    <button onmousedown="manualHold('FORWARD')" onmouseup="manualRelease()" ontouchstart="manualHold('FORWARD')" ontouchend="manualRelease()" class="btn-chubby h-16 rounded-2xl bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 text-white flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-arrow-up text-xl"></i>
+                        <span class="text-[11px] font-extrabold mt-1">เดินหน้า</span>
+                    </button>
+                    <div></div>
+
+                    <button onmousedown="manualHold('LEFT')" onmouseup="manualRelease()" ontouchstart="manualHold('LEFT')" ontouchend="manualRelease()" class="btn-chubby h-16 rounded-2xl bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 text-white flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-arrow-left text-xl"></i>
+                        <span class="text-[11px] font-extrabold mt-1">เลี้ยวซ้าย</span>
+                    </button>
+                    <button onclick="executeSingleCommand('STOP', 0, 0.2)" class="btn-chubby h-16 rounded-2xl bg-rose-500 hover:bg-rose-400 border-b-4 border-rose-700 text-white flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-hand text-xl"></i>
+                        <span class="text-[11px] font-extrabold mt-1">หยุด</span>
+                    </button>
+                    <button onmousedown="manualHold('RIGHT')" onmouseup="manualRelease()" ontouchstart="manualHold('RIGHT')" ontouchend="manualRelease()" class="btn-chubby h-16 rounded-2xl bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 text-white flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-arrow-right text-xl"></i>
+                        <span class="text-[11px] font-extrabold mt-1">เลี้ยวขวา</span>
+                    </button>
+
+                    <div></div>
+                    <button onmousedown="manualHold('BACKWARD')" onmouseup="manualRelease()" ontouchstart="manualHold('BACKWARD')" ontouchend="manualRelease()" class="btn-chubby h-16 rounded-2xl bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 text-white flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-arrow-down text-xl"></i>
+                        <span class="text-[11px] font-extrabold mt-1">ถอยหลัง</span>
+                    </button>
+                    <div></div>
+                </div>
+
+                <!-- Quick Action Buttons -->
+                <div class="mt-5 pt-4 border-t-2 border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-xs font-bold text-slate-500">แสง & เสียง:</span>
+                    <div class="flex gap-2">
+                        <button onclick="executeSingleCommand('LED_RED', 100, 0.5)" class="btn-chubby px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-xs font-bold">🔴 ไฟแดง</button>
+                        <button onclick="executeSingleCommand('LED_GREEN', 100, 0.5)" class="btn-chubby px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold">🟢 ไฟเขียว</button>
+                        <button onclick="executeSingleCommand('LED_BLUE', 100, 0.5)" class="btn-chubby px-3 py-1.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold">🔵 ไฟฟ้า</button>
+                        <button onclick="executeSingleCommand('BEEP', 100, 0.5)" class="btn-chubby px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold">🎺 แตร</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLE Log Console -->
+            <div class="bg-white rounded-3xl p-4 border-2 border-slate-200">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-extrabold text-slate-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-terminal text-purple-400"></i> บันทึกการส่งข้อความบลูทูธ
+                    </span>
+                    <button onclick="document.getElementById('bleLogBox').innerHTML=''" class="text-[11px] text-slate-400 hover:text-slate-600 font-bold">ล้างข้อความ</button>
+                </div>
+                <div id="bleLogBox" class="h-24 overflow-y-auto bg-slate-50 rounded-xl p-2.5 border border-slate-200 font-mono text-[11px] text-slate-600 space-y-1">
+                    <div class="text-slate-400">[ระบบ] ยินดีต้อนรับสู่อาณาจักรหุ่นยนต์ Apitor!</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: AI Assistant & Visual Block Coding (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+
+            <!-- AI Magic Commander -->
+            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-5 border-4 border-indigo-300 shadow-xl text-white">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base font-black flex items-center gap-2">
+                        <span>✨</span> พี่ AI ผู้ช่วยเขียนโค้ดอัจฉริยะ
+                    </h2>
+                    <span class="text-xs bg-white/20 px-3 py-1 rounded-full font-bold">gemini-3.5-flash-lite</span>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-2 mb-3">
+                    <input id="aiPromptInput" type="text" placeholder="บอกสิ่งที่อยากให้หุ่นยนต์ทำ เช่น วิ่งเป็นสี่เหลี่ยม แล้วส่งเสียงแตร..." class="flex-1 bg-white text-slate-800 placeholder-slate-400 rounded-2xl px-4 py-3 text-xs font-bold border-2 border-transparent focus:outline-none focus:border-amber-300 shadow-inner">
+                    <button id="btnAiGenerate" onclick="generateCodeWithAI()" class="btn-chubby px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs flex items-center justify-center gap-2 whitespace-nowrap shadow-md">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> สร้างโค้ดให้หนูที!
+                    </button>
+                </div>
+
+                <!-- One-click Preset Prompts for Kids -->
+                <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span class="text-xs font-bold text-indigo-100 mr-1">ปุ่มคำสั่งด่วน:</span>
+                    <button onclick="quickAiPrompt('เดินวนเป็นรูปสี่เหลี่ยมจัตุรัส แล้วเปิดไฟสีเขียว')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold border border-white/30 transition">🟩 วิ่งสี่เหลี่ยม</button>
+                    <button onclick="quickAiPrompt('เดินวนเป็นวงกลมแล้วบีบแตรฉลอง')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold border border-white/30 transition">⭕ วิ่งวงกลม</button>
+                    <button onclick="quickAiPrompt('เดินหน้าถอยหลังสลับกัน 3 ครั้ง พร้อมกระพริบไฟสีแดงและน้ำเงิน')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold border border-white/30 transition">💃 เต้นระบำไฟกระพริบ</button>
+                    <button onclick="quickAiPrompt('บีบแตร 3 ครั้งแล้วเดินหน้าสุดแรง')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold border border-white/30 transition">🎺 แตร 3 ทีแล้วซิ่ง</button>
+                </div>
+            </div>
+
+            <!-- Visual Block Coding Board -->
+            <div class="bg-white rounded-3xl p-5 border-4 border-amber-200 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                            <span>🧩</span> กระดานบล็อกคำสั่ง (Code Blocks)
+                        </h2>
+                        <p class="text-xs font-semibold text-slate-400">กดปุ่มสีด้านล่างเพื่อเพิ่มคำสั่งลงในแถวได้เลย</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btnRunSeq" onclick="runSequence()" class="btn-chubby px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/30">
+                            <i class="fa-solid fa-play text-sm"></i> สั่งหุ่นยนต์วิ่งเลย!
+                        </button>
+                        <button id="btnStopSeq" onclick="stopSequence()" class="btn-chubby px-4 py-2.5 rounded-2xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-stop"></i> หยุด
+                        </button>
+                        <button onclick="clearSequence()" class="btn-chubby px-3 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold border border-slate-300" title="ล้างกระดาน">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Palette Buttons Styled Like Lego/Scratch Blocks -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5 p-3 rounded-2xl bg-amber-50 border-2 border-amber-200">
+                    <button onclick="addStep('FORWARD', 70, 1.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-up"></i> + เดินหน้า
+                    </button>
+                    <button onclick="addStep('BACKWARD', 70, 1.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-down"></i> + ถอยหลัง
+                    </button>
+                    <button onclick="addStep('LEFT', 60, 0.8)" class="btn-chubby px-3 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-xs font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> + เลี้ยวซ้าย
+                    </button>
+                    <button onclick="addStep('RIGHT', 60, 0.8)" class="btn-chubby px-3 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-xs font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> + เลี้ยวขวา
+                    </button>
+                    <button onclick="addStep('WAIT', 0, 1.0)" class="btn-chubby px-3 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-hourglass-half"></i> + รอเวลา
+                    </button>
+                    <button onclick="addStep('LED_RED', 100, 0.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-xs font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb"></i> + ไฟสีแดง
+                    </button>
+                    <button onclick="addStep('LED_GREEN', 100, 0.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb"></i> + ไฟสีเขียว
+                    </button>
+                    <button onclick="addStep('BEEP', 100, 0.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-xs font-extrabold flex items-center gap-2">
+                        <i class="fa-solid fa-music"></i> + เสียงแตร
+                    </button>
+                </div>
+
+                <!-- Sequence Steps Container -->
+                <div id="sequenceContainer" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
+
+                <!-- Save Program Bar -->
+                <div class="mt-5 pt-4 border-t-2 border-slate-100 flex flex-col sm:flex-row gap-2">
+                    <input id="programNameInput" type="text" placeholder="ตั้งชื่อโปรเจกต์ เช่น ภารกิจซิ่งผ่านด่าน..." class="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-400">
+                    <button onclick="saveCurrentProgramToDB()" class="btn-chubby px-5 py-2.5 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-black flex items-center justify-center gap-2 shadow">
+                        <i class="fa-solid fa-floppy-disk"></i> บันทึกไว้เล่นวันหลัง
+                    </button>
+                </div>
+            </div>
+
+            <!-- Saved Projects Library -->
+            <div class="bg-white rounded-3xl p-5 border-4 border-purple-200 shadow-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-extrabold text-purple-700 flex items-center gap-2">
+                        <span>📚</span> กล่องเก็บผลงานของหนู
+                    </h2>
+                    <span id="savedCountBadge" class="text-xs font-bold bg-purple-100 text-purple-700 px-3 py-1 rounded-full">0 เรื่อง</span>
+                </div>
+                <div id="savedProgramsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Parental Gate Modal -->
+    <div id="parentalModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-slate-300 shadow-2xl text-center">
+            <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-3xl mb-3">
+                🔒
+            </div>
+            <h3 class="text-lg font-black text-slate-800 mb-1">สำหรับคุณพ่อคุณแม่</h3>
+            <p class="text-xs font-bold text-slate-500 mb-4">กรุณาตอบคำถามคณิตศาสตร์ง่ายๆ เพื่อเข้าสู่หน้าตั้งค่า:</p>
+            
+            <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-200 mb-4">
+                <span id="mathQuizQuestion" class="text-2xl font-black text-amber-900 tracking-wider">7 + 5 = ?</span>
+            </div>
+
+            <input id="mathQuizAnswer" type="number" placeholder="พิมพ์คำตอบที่นี่" class="w-full text-center text-xl font-black bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2 mb-4 focus:outline-none focus:border-amber-400">
+
+            <div class="flex gap-2">
+                <button onclick="closeParentalModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200">ยกเลิก</button>
+                <button onclick="verifyParentalAccess()" class="flex-1 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-black shadow">ยืนยัน</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parent Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 border-4 border-sky-300 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-slate-100">
+                <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-sky-500"></i> ตั้งค่าระบบ AI & บลูทูธ Apitor (สำหรับผู้ปกครอง)
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 mt-4 text-xs font-bold">
+                <!-- Gemini API Key -->
+                <div class="p-4 rounded-2xl bg-indigo-50 border-2 border-indigo-200">
+                    <label class="block font-black text-indigo-900 mb-1">
+                        <i class="fa-solid fa-key mr-1"></i> Gemini API Key (สำหรับโมเดล gemini-3.5-flash-lite)
+                    </label>
+                    <input id="cfgApiKey" type="password" placeholder="AIzaSy..." class="w-full bg-white border-2 border-indigo-200 rounded-xl px-3.5 py-2 text-slate-800 font-mono focus:outline-none focus:border-indigo-400">
+                    <p class="text-[11px] text-slate-500 mt-1 font-semibold">คีย์จะถูกบันทึกในเครื่องนี้ผ่าน IndexedDB เท่านั้น ไม่มีการส่งไปภายนอก</p>
+                </div>
+
+                <!-- BLE Services -->
+                <div class="p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 space-y-2">
+                    <div class="font-black text-slate-700">ตั้งค่า Service / Characteristic UUID (เว้นว่างไว้เพื่อค้นหาอัตโนมัติ)</div>
+                    <div>
+                        <label class="text-slate-500 block mb-1">Service UUID:</label>
+                        <input id="cfgServiceUuid" type="text" placeholder="6e400001-b5a3-f393-e0a9-e50e24dcca9e" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 font-mono text-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-slate-500 block mb-1">Write Characteristic UUID:</label>
+                        <input id="cfgCharUuid" type="text" placeholder="6e400002-b5a3-f393-e0a9-e50e24dcca9e" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 font-mono text-slate-700">
+                    </div>
+                </div>
+
+                <!-- Frame & Motor Options -->
+                <div class="p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 space-y-2">
+                    <div class="font-black text-slate-700">การตั้งค่าแพ็กเก็ต & ทิศทางมอเตอร์</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-slate-500 block mb-1">Header 1 (Hex):</label>
+                            <input id="cfgHdr1" type="text" value="55" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1 font-mono text-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-slate-500 block mb-1">Header 2 (Hex):</label>
+                            <input id="cfgHdr2" type="text" value="AA" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1 font-mono text-slate-700">
+                        </div>
+                    </div>
+                    <div class="pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-slate-700">
+                            <input id="cfgInvertMotor" type="checkbox" class="accent-sky-500 w-4 h-4 rounded">
+                            <span>สลับทิศทางมอเตอร์ด้านขวา (Invert Right Motor)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="closeSettingsModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200">ยกเลิก</button>
+                <button onclick="saveConfigToDB()" class="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-black shadow">บันทึกการตั้งค่า</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. INDEXEDDB ENGINE
+        // ==========================================
+        const DB_NAME = 'ApitorRobotKidsDB';
+        const DB_VERSION = 1;
+        let dbInstance = null;
+
+        const defaultConfig = {
+            apiKey: '',
+            serviceUuid: '',
+            charUuid: '',
+            header1: '55',
+            header2: 'AA',
+            invertRightMotor: false
+        };
+
+        let appConfig = JSON.parse(JSON.stringify(defaultConfig));
+
+        function initIndexedDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains('settings')) {
+                        db.createObjectStore('settings', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('programs')) {
+                        db.createObjectStore('programs', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                req.onsuccess = (e) => {
+                    dbInstance = e.target.result;
+                    resolve(dbInstance);
+                };
+                req.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function loadConfigFromDB() {
+            if (!dbInstance) return;
+            const tx = dbInstance.transaction('settings', 'readonly');
+            const store = tx.objectStore('settings');
+            const req = store.get('mainConfig');
+            req.onsuccess = () => {
+                if (req.result && req.result.data) {
+                    appConfig = { ...defaultConfig, ...req.result.data };
+                }
+            };
+        }
+
+        async function saveConfigToDB() {
+            appConfig.apiKey = document.getElementById('cfgApiKey').value.trim();
+            appConfig.serviceUuid = document.getElementById('cfgServiceUuid').value.trim().toLowerCase();
+            appConfig.charUuid = document.getElementById('cfgCharUuid').value.trim().toLowerCase();
+            appConfig.header1 = document.getElementById('cfgHdr1').value.trim() || '55';
+            appConfig.header2 = document.getElementById('cfgHdr2').value.trim() || 'AA';
+            appConfig.invertRightMotor = document.getElementById('cfgInvertMotor').checked;
+
+            const tx = dbInstance.transaction('settings', 'readwrite');
+            tx.objectStore('settings').put({ id: 'mainConfig', data: appConfig });
+            tx.oncomplete = () => {
+                appendLog('[ตั้งค่า] บันทึกข้อมูลเรียบร้อยแล้วค่ะ/ครับ');
+                closeSettingsModal();
+            };
+        }
+
+        // ==========================================
+        // 2. APITOR PACKET BUILDER (WITH XOR CHECKSUM)
+        // ==========================================
+        function buildApitorPacket(action, speedPercent = 70) {
+            const h1 = parseInt(appConfig.header1 || '55', 16);
+            const h2 = parseInt(appConfig.header2 || 'AA', 16);
+            const spd = Math.max(0, Math.min(100, Math.round(speedPercent)));
+
+            let payload = [];
+            let dirA = 0x00;
+            let dirB = 0x00;
+
+            if (action === 'FORWARD') {
+                dirA = 0x01;
+                dirB = appConfig.invertRightMotor ? 0x02 : 0x01;
+                payload = [0x06, 0x01, dirA, spd, dirB, spd];
+            } else if (action === 'BACKWARD') {
+                dirA = 0x02;
+                dirB = appConfig.invertRightMotor ? 0x01 : 0x02;
+                payload = [0x06, 0x01, dirA, spd, dirB, spd];
+            } else if (action === 'LEFT') {
+                dirA = 0x02;
+                dirB = appConfig.invertRightMotor ? 0x02 : 0x01;
+                payload = [0x06, 0x01, dirA, spd, dirB, spd];
+            } else if (action === 'RIGHT') {
+                dirA = 0x01;
+                dirB = appConfig.invertRightMotor ? 0x01 : 0x02;
+                payload = [0x06, 0x01, dirA, spd, dirB, spd];
+            } else if (action === 'STOP') {
+                payload = [0x06, 0x01, 0x00, 0x00, 0x00, 0x00];
+            } else if (action === 'LED_RED') {
+                payload = [0x05, 0x02, 0xFF, 0x00, 0x00];
+            } else if (action === 'LED_GREEN') {
+                payload = [0x05, 0x02, 0x00, 0xFF, 0x00];
+            } else if (action === 'LED_BLUE') {
+                payload = [0x05, 0x02, 0x00, 0x00, 0xFF];
+            } else if (action === 'BEEP') {
+                payload = [0x04, 0x03, 0x01, 0x64];
+            } else {
+                payload = [0x06, 0x01, 0x00, 0x00, 0x00, 0x00];
+            }
+
+            let checksum = 0;
+            for (let i = 0; i < payload.length; i++) checksum ^= payload[i];
+
+            const rawBytes = new Uint8Array([h1, h2, ...payload, checksum]);
+            const formattedHex = Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+            return { bytes: rawBytes, formattedHex };
+        }
+
+        // ==========================================
+        // 3. WEB BLUETOOTH ENGINE
+        // ==========================================
+        let bleDevice = null;
+        let bleServer = null;
+        let writeCharacteristic = null;
+        let isSimulationMode = true;
+
+        const KNOWN_SERVICES = [
+            '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+            '0000ffe0-0000-1000-8000-00805f9b34fb',
+            '0000fff0-0000-1000-8000-00805f9b34fb',
+            '0000ae00-0000-1000-8000-00805f9b34fb'
+        ];
+
+        async function connectBluetooth() {
+            if (!navigator.bluetooth) {
+                alert('เครื่องนี้ยังไม่รองรับ Web Bluetooth ค่ะ กรุณาเปิดผ่าน Google Chrome บน Android หรือคอมพิวเตอร์นะคะ');
+                return;
+            }
+
+            try {
+                appendLog('[BLE] กำลังมองหาหุ่นยนต์...');
+                const optionalServices = [...KNOWN_SERVICES];
+                if (appConfig.serviceUuid) optionalServices.push(appConfig.serviceUuid);
+
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: optionalServices
+                });
+
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                appendLog(`[BLE] เจอน้องหุ่นแล้ว: ${bleDevice.name || 'Apitor Robot'}`);
+
+                bleServer = await bleDevice.gatt.connect();
+                const services = await bleServer.getPrimaryServices();
+                writeCharacteristic = null;
+
+                for (const s of services) {
+                    const chars = await s.getCharacteristics();
+                    for (const c of chars) {
+                        if (!writeCharacteristic && (c.properties.write || c.properties.writeWithoutResponse)) {
+                            if (!appConfig.charUuid || c.uuid.toLowerCase().includes(appConfig.charUuid)) {
+                                writeCharacteristic = c;
+                            }
+                        }
+                    }
+                }
+
+                if (writeCharacteristic) {
+                    updateBleBadge(true, bleDevice.name || 'Apitor Robot');
+                    appendLog('[BLE] หุ่นยนต์พร้อมรับคำสั่งแล้วจ้า!');
+                } else {
+                    updateBleBadge(true, 'เชื่อมต่อแล้ว (รอตั้งค่า)');
+                }
+            } catch (err) {
+                appendLog(`[BLE] ไม่สามารถเชื่อมต่อได้: ${err.message}`);
+            }
+        }
+
+        function onDisconnected() {
+            writeCharacteristic = null;
+            updateBleBadge(false);
+            appendLog('[BLE] หุ่นยนต์ตัดการเชื่อมต่อแล้ว');
+        }
+
+        function updateBleBadge(connected, name = '') {
+            const badge = document.getElementById('bleStatusBadge');
+            if (connected) {
+                badge.className = 'text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold';
+                badge.innerHTML = `<i class="fa-solid fa-circle text-[8px] mr-1"></i>เชื่อมหุ่นแล้ว: ${name}`;
+            } else {
+                badge.className = 'text-xs px-3 py-1 rounded-full bg-rose-100 text-rose-600 border border-rose-300 font-bold';
+                badge.innerHTML = `<i class="fa-solid fa-circle text-[8px] mr-1"></i>ยังไม่เชื่อมหุ่น`;
+            }
+        }
+
+        async function sendBleActionPacket(action, speed = 70) {
+            const { bytes, formattedHex } = buildApitorPacket(action, speed);
+            if (writeCharacteristic) {
+                try {
+                    if (writeCharacteristic.properties.writeWithoutResponse) {
+                        await writeCharacteristic.writeValueWithoutResponse(bytes);
+                    } else {
+                        await writeCharacteristic.writeValue(bytes);
+                    }
+                    appendLog(`[ส่งคำสั่ง] -> ${formattedHex}`);
+                } catch (e) {
+                    appendLog(`[ส่งไม่ผ่าน] ${e.message}`);
+                }
+            } else {
+                appendLog(`[จำลองส่ง] -> ${formattedHex}`);
+            }
+        }
+
+        function toggleSimMode() {
+            isSimulationMode = !isSimulationMode;
+            const btn = document.getElementById('btnSimMode');
+            if (isSimulationMode) {
+                btn.className = 'btn-chubby px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-100 text-amber-700 border-2 border-amber-300';
+                btn.innerHTML = '🧪 โหมดจำลอง: เปิด';
+            } else {
+                btn.className = 'btn-chubby px-4 py-2.5 rounded-2xl text-xs font-bold bg-slate-100 text-slate-500 border-2 border-slate-300';
+                btn.innerHTML = '🧪 โหมดจำลอง: ปิด';
+            }
+        }
+
+        // ==========================================
+        // 4. ROBOT SIMULATION & PLAYFUL SOUND
+        // ==========================================
+        const canvas = document.getElementById('robotCanvas');
+        const ctx = canvas.getContext('2d');
+        let robotState = { x: 210, y: 115, angle: -90, ledColor: '#10B981', trail: [] };
+
+        function drawRobotCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Playful grid dots
+            ctx.fillStyle = '#334155';
+            for (let x = 15; x < canvas.width; x += 30) {
+                for (let y = 15; y < canvas.height; y += 30) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // Path Trail
+            if (robotState.trail.length > 1) {
+                ctx.strokeStyle = '#38BDF8';
+                ctx.lineWidth = 4;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(robotState.trail[0].x, robotState.trail[0].y);
+                for (let p of robotState.trail) ctx.lineTo(p.x, p.y);
+                ctx.stroke();
+            }
+
+            // Robot
+            ctx.save();
+            ctx.translate(robotState.x, robotState.y);
+            ctx.rotate((robotState.angle * Math.PI) / 180);
+
+            // Wheels
+            ctx.fillStyle = '#E2E8F0';
+            ctx.fillRect(-18, -20, 36, 6);
+            ctx.fillRect(-18, 14, 36, 6);
+
+            // Cute Chassis
+            ctx.fillStyle = '#38BDF8';
+            ctx.beginPath();
+            ctx.roundRect(-20, -15, 40, 30, 10);
+            ctx.fill();
+
+            // Eyes / Face
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(10, -6, 4, 0, Math.PI * 2);
+            ctx.arc(10, 6, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#0F172A';
+            ctx.beginPath();
+            ctx.arc(11, -6, 2, 0, Math.PI * 2);
+            ctx.arc(11, 6, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Core Light
+            ctx.fillStyle = robotState.ledColor;
+            ctx.beginPath();
+            ctx.arc(-4, 0, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function resetCanvas() {
+            robotState = { x: 210, y: 115, angle: -90, ledColor: '#10B981', trail: [{ x: 210, y: 115 }] };
+            drawRobotCanvas();
+        }
+
+        function playCuteSound(freq = 880, type = 'sine', duration = 0.15) {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function animateVirtualRobot(action, speed, durationSec) {
+            if (!isSimulationMode) return;
+            const steps = Math.max(1, Math.round(durationSec * 20));
+            const stepTime = (durationSec * 1000) / steps;
+            let count = 0;
+
+            if (action === 'LED_RED') { robotState.ledColor = '#F43F5E'; setLedIndicator('#F43F5E'); drawRobotCanvas(); playCuteSound(520, 'triangle'); return; }
+            if (action === 'LED_GREEN') { robotState.ledColor = '#10B981'; setLedIndicator('#10B981'); drawRobotCanvas(); playCuteSound(650, 'triangle'); return; }
+            if (action === 'LED_BLUE') { robotState.ledColor = '#3B82F6'; setLedIndicator('#3B82F6'); drawRobotCanvas(); playCuteSound(780, 'triangle'); return; }
+            if (action === 'BEEP') { playCuteSound(880, 'square', 0.25); return; }
+
+            const timer = setInterval(() => {
+                count++;
+                const moveDist = (speed / 100) * 2.4;
+                const rad = (robotState.angle * Math.PI) / 180;
+
+                if (action === 'FORWARD') {
+                    robotState.x = Math.max(25, Math.min(canvas.width - 25, robotState.x + Math.cos(rad) * moveDist));
+                    robotState.y = Math.max(25, Math.min(canvas.height - 25, robotState.y + Math.sin(rad) * moveDist));
+                    robotState.trail.push({ x: robotState.x, y: robotState.y });
+                } else if (action === 'BACKWARD') {
+                    robotState.x = Math.max(25, Math.min(canvas.width - 25, robotState.x - Math.cos(rad) * moveDist));
+                    robotState.y = Math.max(25, Math.min(canvas.height - 25, robotState.y - Math.sin(rad) * moveDist));
+                    robotState.trail.push({ x: robotState.x, y: robotState.y });
+                } else if (action === 'LEFT') {
+                    robotState.angle -= (speed / 100) * 6;
+                } else if (action === 'RIGHT') {
+                    robotState.angle += (speed / 100) * 6;
+                }
+                drawRobotCanvas();
+                if (count >= steps) clearInterval(timer);
+            }, stepTime);
+        }
+
+        function setLedIndicator(color) {
+            const dot = document.getElementById('ledDot');
+            dot.style.backgroundColor = color;
+            dot.style.boxShadow = `0 0 10px ${color}`;
+        }
+
+        // ==========================================
+        // 5. MANUAL CONTROLLER
+        // ==========================================
+        let manualInterval = null;
+
+        document.getElementById('manualSpeed').addEventListener('input', (e) => {
+            document.getElementById('manualSpeedVal').textContent = `${e.target.value}%`;
+        });
+
+        function manualHold(action) {
+            if (manualInterval) clearInterval(manualInterval);
+            const spd = parseInt(document.getElementById('manualSpeed').value, 10) || 70;
+            executeSingleCommand(action, spd, 0.25);
+            playCuteSound(440, 'sine', 0.1);
+            manualInterval = setInterval(() => {
+                executeSingleCommand(action, spd, 0.25);
+            }, 250);
+        }
+
+        function manualRelease() {
+            if (manualInterval) {
+                clearInterval(manualInterval);
+                manualInterval = null;
+                executeSingleCommand('STOP', 0, 0.1);
+            }
+        }
+
+        async function executeSingleCommand(action, speed = 70, duration = 0.5) {
+            document.getElementById('activeActionText').textContent = `${action} (${speed}%)`;
+            await sendBleActionPacket(action, speed);
+            animateVirtualRobot(action, speed, duration);
+        }
+
+        // ==========================================
+        // 6. VISUAL CODING SEQUENCER
+        // ==========================================
+        let commandSequence = [
+            { id: 1, action: 'FORWARD', speed: 70, duration: 1.5 },
+            { id: 2, action: 'RIGHT', speed: 60, duration: 0.8 },
+            { id: 3, action: 'FORWARD', speed: 70, duration: 1.5 },
+            { id: 4, action: 'LED_GREEN', speed: 100, duration: 0.5 },
+            { id: 5, action: 'BEEP', speed: 100, duration: 0.5 }
+        ];
+        let isRunningSequence = false;
+
+        const ACTION_LABELS = {
+            FORWARD: { name: 'เดินหน้า', icon: 'fa-arrow-up', color: 'bg-sky-500' },
+            BACKWARD: { name: 'ถอยหลัง', icon: 'fa-arrow-down', color: 'bg-sky-500' },
+            LEFT: { name: 'เลี้ยวซ้าย', icon: 'fa-rotate-left', color: 'bg-teal-500' },
+            RIGHT: { name: 'เลี้ยวขวา', icon: 'fa-rotate-right', color: 'bg-teal-500' },
+            WAIT: { name: 'รอเวลา', icon: 'fa-hourglass-half', color: 'bg-indigo-500' },
+            LED_RED: { name: 'เปิดไฟสีแดง', icon: 'fa-lightbulb', color: 'bg-rose-500' },
+            LED_GREEN: { name: 'เปิดไฟสีเขียว', icon: 'fa-lightbulb', color: 'bg-emerald-500' },
+            LED_BLUE: { name: 'เปิดไฟสีน้ำเงิน', icon: 'fa-lightbulb', color: 'bg-blue-500' },
+            BEEP: { name: 'ส่งเสียงแตร', icon: 'fa-music', color: 'bg-amber-500' }
+        };
+
+        function renderSequence() {
+            const container = document.getElementById('sequenceContainer');
+            if (commandSequence.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-xs font-bold text-slate-400 border-4 border-dashed border-slate-200 rounded-2xl">ยังไม่มีคำสั่งเลยค่ะ กดปุ่มสีด้านบนเพื่อเริ่มเขียนได้เลย!</div>`;
+                return;
+            }
+
+            container.innerHTML = commandSequence.map((item, idx) => {
+                const meta = ACTION_LABELS[item.action] || { name: item.action, icon: 'fa-cube', color: 'bg-slate-500' };
+                const showSpeed = ['FORWARD', 'BACKWARD', 'LEFT', 'RIGHT'].includes(item.action);
+                return `
+                <div id="seq-step-${idx}" class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-white border-2 border-slate-200 shadow-sm transition">
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 text-xs font-black flex items-center justify-center">${idx + 1}</span>
+                        <div class="w-8 h-8 rounded-xl ${meta.color} text-white flex items-center justify-center shadow">
+                            <i class="fa-solid ${meta.icon}"></i>
+                        </div>
+                        <span class="text-xs font-extrabold text-slate-800">${meta.name}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${showSpeed ? `
+                        <div class="flex items-center gap-1 text-xs font-bold bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+                            <span class="text-slate-400">แรง:</span>
+                            <input type="number" min="10" max="100" value="${item.speed}" onchange="updateStep(${idx}, 'speed', this.value)" class="w-12 bg-transparent text-center font-black text-sky-600 focus:outline-none">
+                            <span class="text-slate-400">%</span>
+                        </div>` : ''}
+                        <div class="flex items-center gap-1 text-xs font-bold bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+                            <span class="text-slate-400">เวลา:</span>
+                            <input type="number" step="0.1" min="0.1" max="30" value="${item.duration}" onchange="updateStep(${idx}, 'duration', this.value)" class="w-12 bg-transparent text-center font-black text-amber-600 focus:outline-none">
+                            <span class="text-slate-400">วิ</span>
+                        </div>
+                        <button onclick="removeStep(${idx})" class="w-7 h-7 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function addStep(action, speed = 70, duration = 1.0) {
+            commandSequence.push({ id: Date.now() + Math.random(), action, speed, duration });
+            renderSequence();
+            playCuteSound(580, 'sine', 0.1);
+        }
+
+        function updateStep(idx, field, val) {
+            if (!commandSequence[idx]) return;
+            commandSequence[idx][field] = parseFloat(val) || 0.5;
+        }
+
+        function removeStep(idx) {
+            commandSequence.splice(idx, 1);
+            renderSequence();
+            playCuteSound(300, 'triangle', 0.1);
+        }
+
+        function clearSequence() {
+            if (isRunningSequence) stopSequence();
+            commandSequence = [];
+            renderSequence();
+        }
+
+        async function runSequence() {
+            if (isRunningSequence || commandSequence.length === 0) return;
+            isRunningSequence = true;
+            appendLog(`[เริ่มรัน] รันคำสั่งทั้งหมด ${commandSequence.length} ขั้นตอน`);
+
+            for (let i = 0; i < commandSequence.length; i++) {
+                if (!isRunningSequence) break;
+                document.querySelectorAll('[id^="seq-step-"]').forEach(el => el.classList.remove('step-active'));
+                const stepEl = document.getElementById(`seq-step-${i}`);
+                if (stepEl) {
+                    stepEl.classList.add('step-active');
+                    stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+
+                const step = commandSequence[i];
+                if (step.action !== 'WAIT') {
+                    await executeSingleCommand(step.action, step.speed, step.duration);
+                } else {
+                    document.getElementById('activeActionText').textContent = `รอแป๊บนะ (${step.duration}s)`;
+                }
+
+                await new Promise(r => setTimeout(r, step.duration * 1000));
+
+                if (['FORWARD', 'BACKWARD', 'LEFT', 'RIGHT'].includes(step.action) && isRunningSequence) {
+                    await sendBleActionPacket('STOP', 0);
+                }
+            }
+
+            stopSequence();
+        }
+
+        async function stopSequence() {
+            isRunningSequence = false;
+            document.querySelectorAll('[id^="seq-step-"]').forEach(el => el.classList.remove('step-active'));
+            await sendBleActionPacket('STOP', 0);
+            document.getElementById('activeActionText').textContent = 'พร้อมซิ่งแล้ว!';
+            appendLog('[โปรแกรม] หยุดการทำงานเรียบร้อย');
+        }
+
+        // ==========================================
+        // 7. SAVED PROJECTS
+        // ==========================================
+        function saveCurrentProgramToDB() {
+            const nameInput = document.getElementById('programNameInput');
+            const title = nameInput.value.trim() || `ภารกิจสุดเจ๋ง #${new Date().toLocaleTimeString('th-TH')}`;
+            if (commandSequence.length === 0) {
+                alert('เขียนคำสั่งอย่างน้อย 1 ขั้นตอนก่อนบันทึกนะคะ/ครับ');
+                return;
+            }
+
+            const tx = dbInstance.transaction('programs', 'readwrite');
+            tx.objectStore('programs').add({
+                title: title,
+                steps: JSON.parse(JSON.stringify(commandSequence)),
+                updatedAt: new Date().toLocaleDateString('th-TH')
+            });
+            tx.oncomplete = () => {
+                nameInput.value = '';
+                appendLog(`[บันทึก] บันทึกผลงาน "${title}" เรียบร้อยแล้ว`);
+                loadSavedProgramsFromDB();
+                playCuteSound(880, 'sine', 0.2);
+            };
+        }
+
+        function loadSavedProgramsFromDB() {
+            if (!dbInstance) return;
+            const tx = dbInstance.transaction('programs', 'readonly');
+            const req = tx.objectStore('programs').getAll();
+            req.onsuccess = () => {
+                const list = req.result || [];
+                document.getElementById('savedCountBadge').textContent = `${list.length} เรื่อง`;
+                const container = document.getElementById('savedProgramsList');
+                if (list.length === 0) {
+                    container.innerHTML = `<div class="col-span-2 text-xs font-bold text-slate-400 py-4 text-center">ยังไม่มีผลงานที่บันทึกไว้เลย</div>`;
+                    return;
+                }
+                container.innerHTML = list.map(prog => `
+                    <div class="p-3.5 rounded-2xl bg-purple-50 border-2 border-purple-200 flex items-center justify-between gap-2">
+                        <div>
+                            <div class="text-xs font-black text-purple-900">${prog.title}</div>
+                            <div class="text-[11px] font-bold text-purple-600">${prog.steps.length} ขั้นตอน • ${prog.updatedAt}</div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick='loadProgramIntoWorkspace(${JSON.stringify(prog.steps)})' class="btn-chubby px-3 py-1.5 rounded-xl bg-purple-500 text-white text-xs font-bold shadow">
+                                เล่น
+                            </button>
+                            <button onclick="deleteProgramFromDB(${prog.id})" class="p-1.5 text-slate-400 hover:text-rose-500">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            };
+        }
+
+        function loadProgramIntoWorkspace(steps) {
+            commandSequence = steps;
+            renderSequence();
+            appendLog(`[โหลด] โหลด ${steps.length} ขั้นตอนขึ้นกระดานแล้ว`);
+            playCuteSound(660, 'sine', 0.15);
+        }
+
+        function deleteProgramFromDB(id) {
+            const tx = dbInstance.transaction('programs', 'readwrite');
+            tx.objectStore('programs').delete(id);
+            tx.oncomplete = () => loadSavedProgramsFromDB();
+        }
+
+        // ==========================================
+        // 8. GEMINI AI WITH gemini-3.5-flash-lite
+        // ==========================================
+        function quickAiPrompt(text) {
+            document.getElementById('aiPromptInput').value = text;
+            generateCodeWithAI();
+        }
+
+        async function generateCodeWithAI() {
+            const promptText = document.getElementById('aiPromptInput').value.trim();
+            if (!promptText) return;
+
+            if (!appConfig.apiKey) {
+                alert('คุณพ่อคุณแม่ยังไม่ได้ใส่ Gemini API Key ค่ะ รบกวนกดปุ่มรูปฟันเฟืองมุมบนขวาเพื่อใส่คีย์ก่อนนะคะ');
+                requestParentAccess();
+                return;
+            }
+
+            const btn = document.getElementById('btnAiGenerate');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังคิดท่าเต้น...';
+
+            const systemInstruction = `แปลงคำสั่งของผู้ใช้ให้เป็น JSON Array สำหรับควบคุมหุ่นยนต์ Apitor
+แต่ละ Object มีโครงสร้าง: {"action": "FORWARD"|"BACKWARD"|"LEFT"|"RIGHT"|"WAIT"|"LED_RED"|"LED_GREEN"|"LED_BLUE"|"BEEP", "speed": 10-100, "duration": 0.2-10.0}
+ตอบกลับเฉพาะ JSON Array เท่านั้น ห้ามมี Markdown หรือคำอธิบายอื่น`;
+
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${appConfig.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: `${systemInstruction}\\n\\nคำสั่งผู้ใช้: ${promptText}` }] }]
+                    })
+                });
+
+                const data = await res.json();
+                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+                const cleanedJson = rawText.replace(/```json|```/g, '').trim();
+                const steps = JSON.parse(cleanedJson);
+
+                if (Array.isArray(steps) && steps.length > 0) {
+                    commandSequence = steps.map((s, i) => ({
+                        id: Date.now() + i,
+                        action: s.action || 'FORWARD',
+                        speed: Number(s.speed) || 70,
+                        duration: Number(s.duration) || 1.0
+                    }));
+                    renderSequence();
+                    appendLog(`[AI] สร้างท่าเต้น ${commandSequence.length} ขั้นตอนเสร็จแล้วจ้า!`);
+                    playCuteSound(880, 'sine', 0.25);
+                }
+            } catch (err) {
+                appendLog(`[AI Error] ขออภัยจ้า ลองใหม่อีกครั้งนะคะ: ${err.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> สร้างโค้ดให้หนูที!';
+            }
+        }
+
+        // ==========================================
+        // 9. PARENTAL GATE & MODAL HELPERS
+        // ==========================================
+        let currentQuizAnswer = 0;
+
+        function requestParentAccess() {
+            const num1 = Math.floor(Math.random() * 8) + 3;
+            const num2 = Math.floor(Math.random() * 8) + 2;
+            currentQuizAnswer = num1 + num2;
+            document.getElementById('mathQuizQuestion').textContent = `${num1} + ${num2} = ?`;
+            document.getElementById('mathQuizAnswer').value = '';
+            document.getElementById('parentalModal').classList.remove('hidden');
+        }
+
+        function closeParentalModal() {
+            document.getElementById('parentalModal').classList.add('hidden');
+        }
+
+        function verifyParentalAccess() {
+            const userAns = parseInt(document.getElementById('mathQuizAnswer').value, 10);
+            if (userAns === currentQuizAnswer) {
+                closeParentalModal();
+                openSettingsModal();
+            } else {
+                alert('คำตอบยังไม่ถูกต้องนะคะ/ครับ');
+                requestParentAccess();
+            }
+        }
+
+        function openSettingsModal() {
+            document.getElementById('cfgApiKey').value = appConfig.apiKey || '';
+            document.getElementById('cfgServiceUuid').value = appConfig.serviceUuid || '';
+            document.getElementById('cfgCharUuid').value = appConfig.charUuid || '';
+            document.getElementById('cfgHdr1').value = appConfig.header1 || '55';
+            document.getElementById('cfgHdr2').value = appConfig.header2 || 'AA';
+            document.getElementById('cfgInvertMotor').checked = !!appConfig.invertRightMotor;
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function appendLog(msg) {
+            const box = document.getElementById('bleLogBox');
+            const time = new Date().toLocaleTimeString('th-TH');
+            const line = document.createElement('div');
+            line.textContent = `[${time}] ${msg}`;
+            box.appendChild(line);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            resetCanvas();
+            renderSequence();
+            await initIndexedDB();
+            await loadConfigFromDB();
+            loadSavedProgramsFromDB();
+        });
+    </script>
+</body>
+</html>
