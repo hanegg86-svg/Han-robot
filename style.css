@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&display=swap');
+
+* {
+    font-family: 'Prompt', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: #F0FDF4;
+    background-image: radial-gradient(#BBF7D0 1.5px, transparent 1.5px), radial-gradient(#BBF7D0 1.5px, #F0FDF4 1.5px);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+}
+
+.btn-chubby {
+    box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+    transition: all 0.1s ease;
+}
+
+.btn-chubby:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+
+.step-active {
+    border: 4px solid #F59E0B !important;
+    transform: scale(1.03);
+    background-color: #FEF3C7 !important;
+    box-shadow: 0 10px 20px rgba(245, 158, 11, 0.25);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #E2E8F0;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #94A3B8;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #64748B;
+}
