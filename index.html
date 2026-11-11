@@ -1,1061 +1,971 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Apitor Robot Studio Kids Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&display=swap');
-        * {
-            font-family: 'Prompt', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        body {
-            background-color: #F0FDF4;
-            background-image: radial-gradient(#BBF7D0 1.5px, transparent 1.5px), radial-gradient(#BBF7D0 1.5px, #F0FDF4 1.5px);
-            background-size: 30px 30px;
-            background-position: 0 0, 15px 15px;
-        }
-        .btn-chubby {
-            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
-            transition: all 0.1s ease;
-        }
-        .btn-chubby:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
-        }
-        .step-active {
-            border: 4px solid #F59E0B !important;
-            transform: scale(1.03);
-            background-color: #FEF3C7 !important;
-            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.25);
-        }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #E2E8F0; border-radius: 9999px; }
-        ::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 9999px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Apitor / Tudao Robot Studio Kids Edition</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700;800;900&display=swap');
+* { font-family: 'Prompt', sans-serif; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+body {
+  background-color: #F0FDF4;
+  background-image: radial-gradient(#BBF7D0 1.5px, transparent 1.5px), radial-gradient(#BBF7D0 1.5px, #F0FDF4 1.5px);
+  background-size: 30px 30px; background-position: 0 0, 15px 15px;
+}
+.btn-chubby { box-shadow: 0 5px 0 rgba(0,0,0,0.16); transition: all 0.1s ease; }
+.btn-chubby:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.16); }
+.step-active { border: 4px solid #F59E0B !important; transform: scale(1.01); background-color: #FEF3C7 !important; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #E2E8F0; border-radius: 9999px; }
+::-webkit-scrollbar-thumb { background: #94A3B8; border-radius: 9999px; }
+</style>
 </head>
 <body class="min-h-screen text-slate-800 pb-12 select-none">
 
-    <!-- Top Navigation Bar -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b-4 border-amber-300 shadow-md px-4 py-3">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-amber-400 border-2 border-amber-500 flex items-center justify-center shadow-md text-white text-2xl transform rotate-[-3deg]">
-                    🤖
-                </div>
-                <div>
-                    <h1 class="font-extrabold text-xl text-sky-600 flex items-center gap-2">
-                        Apitor Robot Studio
-                        <span id="bleStatusBadge" class="text-xs px-3 py-1 rounded-full bg-rose-100 text-rose-600 border border-rose-300 font-bold">
-                            <i class="fa-solid fa-circle text-[8px] mr-1"></i>ยังไม่เชื่อมหุ่น
-                        </span>
-                    </h1>
-                    <p class="text-xs font-semibold text-slate-500">ห้องควบคุมหุ่นยนต์สุดสนุก & เพื่อน AI ตัวจิ๋ว</p>
-                </div>
-            </div>
+<!-- Toast Banner -->
+<div id="appNoticeBanner" class="fixed bottom-4 right-4 z-50 hidden max-w-sm bg-slate-900 text-white px-4 py-3 rounded-2xl border-2 border-amber-400 shadow-2xl flex items-center gap-3 text-xs font-bold">
+  <span id="appNoticeIcon" class="text-lg">💡</span>
+  <span id="appNoticeText" class="flex-1">แจ้งเตือน</span>
+  <button onclick="hideNotice()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+</div>
 
-            <div class="flex items-center gap-2">
-                <button id="btnSimMode" onclick="toggleSimMode()" class="btn-chubby px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-100 text-amber-700 border-2 border-amber-300 hover:bg-amber-200">
-                    🧪 โหมดจำลอง: เปิด
-                </button>
-                <button id="btnConnectBLE" onclick="connectBluetooth()" class="btn-chubby px-5 py-2.5 rounded-2xl text-xs font-extrabold bg-sky-500 hover:bg-sky-400 text-white border-2 border-sky-600 flex items-center gap-2 shadow-lg shadow-sky-500/30">
-                    <i class="fa-brands fa-bluetooth-b text-sm"></i> ค้นหาหุ่นยนต์
-                </button>
-                <button onclick="requestParentAccess()" class="btn-chubby p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 border-2 border-slate-300" title="ตั้งค่าระบบ (สำหรับผู้ปกครอง)">
-                    <i class="fa-solid fa-gear text-base"></i>
-                </button>
-            </div>
+<!-- Header -->
+<header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b-4 border-amber-300 shadow-md px-4 py-3">
+  <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 rounded-2xl bg-amber-400 border-2 border-amber-500 flex items-center justify-center shadow-md text-white text-2xl rotate-[-3deg]">🤖</div>
+      <div>
+        <h1 class="font-extrabold text-xl text-sky-600 flex flex-wrap items-center gap-2">
+          Apitor / Tudao Robot Studio
+          <span id="bleStatusBadge" class="text-xs px-3 py-1 rounded-full bg-rose-100 text-rose-600 border border-rose-300 font-bold">
+            <i class="fa-solid fa-circle text-[8px] mr-1"></i>ยังไม่เชื่อมหุ่น
+          </span>
+        </h1>
+        <p class="text-xs font-semibold text-slate-500">ห้องควบคุมหุ่นยนต์ด้วยชุดคำสั่ง Tudao Lua & Web Bluetooth</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <button id="btnSimMode" onclick="toggleSimMode()" class="btn-chubby px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-100 text-amber-700 border-2 border-amber-300">🧪 โหมดจำลอง: เปิด</button>
+      <button id="btnConnectBLE" onclick="connectBluetooth()" class="btn-chubby px-5 py-2.5 rounded-2xl text-xs font-extrabold bg-sky-500 hover:bg-sky-400 text-white border-2 border-sky-600 flex items-center gap-2">
+        <i class="fa-brands fa-bluetooth-b text-sm"></i> ค้นหาหุ่นยนต์
+      </button>
+      <button onclick="requestParentAccess()" class="btn-chubby p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 border-2 border-slate-300" title="ตั้งค่าระบบ">
+        <i class="fa-solid fa-gear text-base"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Main Layout -->
+<main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+  <!-- Left Column (5 cols) -->
+  <div class="lg:col-span-5 space-y-6">
+
+    <!-- 2D Robot Arena & Sensors -->
+    <div class="bg-white rounded-3xl p-4 border-4 border-sky-200 shadow-xl">
+      <div class="flex items-center justify-between mb-3 px-1">
+        <h2 class="text-sm font-extrabold text-sky-600 flex items-center gap-2"><span>🗺️</span> สนามจำลอง & หน้าจอหุ่นยนต์ Tudao</h2>
+        <button onclick="resetCanvas()" class="text-xs font-bold text-slate-400 hover:text-sky-500"><i class="fa-solid fa-rotate-left mr-1"></i>กลับจุดเริ่ม</button>
+      </div>
+
+      <div class="relative rounded-2xl overflow-hidden bg-slate-900 border-4 border-slate-700 shadow-inner">
+        <canvas id="robotCanvas" width="440" height="230" class="w-full h-[210px] block"></canvas>
+        <div class="absolute top-2.5 left-2.5 bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-600 flex items-center gap-1.5">
+          <span class="text-[10px] font-bold text-slate-300">LED 1-4:</span>
+          <span id="ledNode1" class="w-3 h-3 rounded-full bg-emerald-400 border border-white/30"></span>
+          <span id="ledNode2" class="w-3 h-3 rounded-full bg-emerald-400 border border-white/30"></span>
+          <span id="ledNode3" class="w-3 h-3 rounded-full bg-emerald-400 border border-white/30"></span>
+          <span id="ledNode4" class="w-3 h-3 rounded-full bg-emerald-400 border border-white/30"></span>
         </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        <!-- Left Column: Canvas & Manual Joypad (5 cols) -->
-        <div class="lg:col-span-5 space-y-6">
-
-            <!-- Virtual Robot Canvas -->
-            <div class="bg-white rounded-3xl p-4 border-4 border-sky-200 shadow-xl">
-                <div class="flex items-center justify-between mb-3 px-1">
-                    <h2 class="text-sm font-extrabold text-sky-600 flex items-center gap-2">
-                        <span>🗺️</span> สนามวิ่งเล่นจำลองของหุ่นยนต์
-                    </h2>
-                    <button onclick="resetCanvas()" class="text-xs font-bold text-slate-400 hover:text-sky-500">
-                        <i class="fa-solid fa-rotate-left mr-1"></i>กลับจุดเริ่ม
-                    </button>
-                </div>
-                <div class="relative rounded-2xl overflow-hidden bg-slate-900 border-4 border-slate-700 shadow-inner">
-                    <canvas id="robotCanvas" width="420" height="230" class="w-full h-[210px] block"></canvas>
-                    <div id="robotLedIndicator" class="absolute top-3 right-3 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/90 border-2 border-slate-300 flex items-center gap-2 shadow">
-                        <span id="ledDot" class="w-3.5 h-3.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
-                        <span id="activeActionText" class="text-slate-700">พร้อมซิ่งแล้ว!</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Manual Joypad Controller (Kids Friendly D-Pad) -->
-            <div class="bg-white rounded-3xl p-5 border-4 border-emerald-200 shadow-xl">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-sm font-extrabold text-emerald-600 flex items-center gap-2">
-                        <span>🎮</span> ปุ่มบังคับทิศทาง Real-time
-                    </h2>
-                    <div class="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
-                        <span class="text-xs font-bold text-emerald-700">ความเร็ว:</span>
-                        <input id="manualSpeed" type="range" min="20" max="100" value="70" class="w-20 accent-emerald-500 cursor-pointer">
-                        <span id="manualSpeedVal" class="font-extrabold text-emerald-600 text-xs w-8">70%</span>
-                    </div>
-                </div>
-
-                <!-- Joypad Buttons -->
-                <div class="grid grid-cols-3 gap-3 max-w-[260px] mx-auto my-2">
-                    <div></div>
-                    <button onmousedown="manualHold('FORWARD')" onmouseup="manualRelease()" ontouchstart="manualHold('FORWARD')" ontouchend="manualRelease()" class="btn-chubby h-16 rounded-2xl bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 text-white flex flex-col items-center justify-center">
-                        <i class="fa-solid fa-arrow-up text-xl"></i>
-                        <span class="text-[11px] font-extrabold mt-1">เดินหน้า</span>
-                    </button>
-                    <div></div>
-
-                    <button onmousedown="manualHold('LEFT')" onmouseup="manualRelease()" ontouchstart="manualHold('LEFT')" ontouchend="manualRelease()" class="btn-chubby h-16 rounded-2xl bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 text-white flex flex-col items-center justify-center">
-                        <i class="fa-solid fa-arrow-left text-xl"></i>
-                        <span class="text-[11px] font-extrabold mt-1">เลี้ยวซ้าย</span>
-                    </button>
-                    <button onclick="executeSingleCommand('STOP', 0, 0.2)" class="btn-chubby h-16 rounded-2xl bg-rose-500 hover:bg-rose-400 border-b-4 border-rose-700 text-white flex flex-col items-center justify-center">
-                        <i class="fa-solid fa-hand text-xl"></i>
-                        <span class="text-[11px] font-extrabold mt-1">หยุด</span>
-                    </button>
-                    <button onmousedown="manualHold('RIGHT')" onmouseup="manualRelease()" ontouchstart="manualHold('RIGHT')" ontouchend="manualRelease()" class="btn-chubby h-16 rounded-2xl bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 text-white flex flex-col items-center justify-center">
-                        <i class="fa-solid fa-arrow-right text-xl"></i>
-                        <span class="text-[11px] font-extrabold mt-1">เลี้ยวขวา</span>
-                    </button>
-
-                    <div></div>
-                    <button onmousedown="manualHold('BACKWARD')" onmouseup="manualRelease()" ontouchstart="manualHold('BACKWARD')" ontouchend="manualRelease()" class="btn-chubby h-16 rounded-2xl bg-sky-500 hover:bg-sky-400 border-b-4 border-sky-700 text-white flex flex-col items-center justify-center">
-                        <i class="fa-solid fa-arrow-down text-xl"></i>
-                        <span class="text-[11px] font-extrabold mt-1">ถอยหลัง</span>
-                    </button>
-                    <div></div>
-                </div>
-
-                <!-- Quick Action Buttons -->
-                <div class="mt-5 pt-4 border-t-2 border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-xs font-bold text-slate-500">แสง & เสียง:</span>
-                    <div class="flex gap-2">
-                        <button onclick="executeSingleCommand('LED_RED', 100, 0.5)" class="btn-chubby px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-xs font-bold">🔴 ไฟแดง</button>
-                        <button onclick="executeSingleCommand('LED_GREEN', 100, 0.5)" class="btn-chubby px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold">🟢 ไฟเขียว</button>
-                        <button onclick="executeSingleCommand('LED_BLUE', 100, 0.5)" class="btn-chubby px-3 py-1.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold">🔵 ไฟฟ้า</button>
-                        <button onclick="executeSingleCommand('BEEP', 100, 0.5)" class="btn-chubby px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-xs font-bold">🎺 แตร</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- BLE Log Console -->
-            <div class="bg-white rounded-3xl p-4 border-2 border-slate-200">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-extrabold text-slate-500 flex items-center gap-1.5">
-                        <i class="fa-solid fa-terminal text-purple-400"></i> บันทึกการส่งข้อความบลูทูธ
-                    </span>
-                    <button onclick="document.getElementById('bleLogBox').innerHTML=''" class="text-[11px] text-slate-400 hover:text-slate-600 font-bold">ล้างข้อความ</button>
-                </div>
-                <div id="bleLogBox" class="h-24 overflow-y-auto bg-slate-50 rounded-xl p-2.5 border border-slate-200 font-mono text-[11px] text-slate-600 space-y-1">
-                    <div class="text-slate-400">[ระบบ] ยินดีต้อนรับสู่อาณาจักรหุ่นยนต์ Apitor!</div>
-                </div>
-            </div>
-
+        <div class="absolute top-2.5 right-2.5 px-3 py-1 rounded-xl text-xs font-bold bg-white/95 border-2 border-slate-300 flex items-center gap-1.5 shadow">
+          <span id="ledDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <span id="activeActionText" class="text-slate-700">พร้อมซิ่งแล้ว!</span>
         </div>
-
-        <!-- Right Column: AI Assistant & Visual Block Coding (7 cols) -->
-        <div class="lg:col-span-7 space-y-6">
-
-            <!-- AI Magic Commander -->
-            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-5 border-4 border-indigo-300 shadow-xl text-white">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-base font-black flex items-center gap-2">
-                        <span>✨</span> พี่ AI ผู้ช่วยเขียนโค้ดอัจฉริยะ
-                    </h2>
-                    <span class="text-xs bg-white/20 px-3 py-1 rounded-full font-bold">gemini-3.5-flash-lite</span>
-                </div>
-                
-                <div class="flex flex-col sm:flex-row gap-2 mb-3">
-                    <input id="aiPromptInput" type="text" placeholder="บอกสิ่งที่อยากให้หุ่นยนต์ทำ เช่น วิ่งเป็นสี่เหลี่ยม แล้วส่งเสียงแตร..." class="flex-1 bg-white text-slate-800 placeholder-slate-400 rounded-2xl px-4 py-3 text-xs font-bold border-2 border-transparent focus:outline-none focus:border-amber-300 shadow-inner">
-                    <button id="btnAiGenerate" onclick="generateCodeWithAI()" class="btn-chubby px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs flex items-center justify-center gap-2 whitespace-nowrap shadow-md">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> สร้างโค้ดให้หนูที!
-                    </button>
-                </div>
-
-                <!-- One-click Preset Prompts for Kids -->
-                <div class="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span class="text-xs font-bold text-indigo-100 mr-1">ปุ่มคำสั่งด่วน:</span>
-                    <button onclick="quickAiPrompt('เดินวนเป็นรูปสี่เหลี่ยมจัตุรัส แล้วเปิดไฟสีเขียว')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold border border-white/30 transition">🟩 วิ่งสี่เหลี่ยม</button>
-                    <button onclick="quickAiPrompt('เดินวนเป็นวงกลมแล้วบีบแตรฉลอง')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold border border-white/30 transition">⭕ วิ่งวงกลม</button>
-                    <button onclick="quickAiPrompt('เดินหน้าถอยหลังสลับกัน 3 ครั้ง พร้อมกระพริบไฟสีแดงและน้ำเงิน')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold border border-white/30 transition">💃 เต้นระบำไฟกระพริบ</button>
-                    <button onclick="quickAiPrompt('บีบแตร 3 ครั้งแล้วเดินหน้าสุดแรง')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold border border-white/30 transition">🎺 แตร 3 ทีแล้วซิ่ง</button>
-                </div>
-            </div>
-
-            <!-- Visual Block Coding Board -->
-            <div class="bg-white rounded-3xl p-5 border-4 border-amber-200 shadow-xl">
-                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                    <div>
-                        <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
-                            <span>🧩</span> กระดานบล็อกคำสั่ง (Code Blocks)
-                        </h2>
-                        <p class="text-xs font-semibold text-slate-400">กดปุ่มสีด้านล่างเพื่อเพิ่มคำสั่งลงในแถวได้เลย</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button id="btnRunSeq" onclick="runSequence()" class="btn-chubby px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/30">
-                            <i class="fa-solid fa-play text-sm"></i> สั่งหุ่นยนต์วิ่งเลย!
-                        </button>
-                        <button id="btnStopSeq" onclick="stopSequence()" class="btn-chubby px-4 py-2.5 rounded-2xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs flex items-center gap-1.5">
-                            <i class="fa-solid fa-stop"></i> หยุด
-                        </button>
-                        <button onclick="clearSequence()" class="btn-chubby px-3 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold border border-slate-300" title="ล้างกระดาน">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Palette Buttons Styled Like Lego/Scratch Blocks -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5 p-3 rounded-2xl bg-amber-50 border-2 border-amber-200">
-                    <button onclick="addStep('FORWARD', 70, 1.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-extrabold flex items-center gap-2">
-                        <i class="fa-solid fa-arrow-up"></i> + เดินหน้า
-                    </button>
-                    <button onclick="addStep('BACKWARD', 70, 1.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-extrabold flex items-center gap-2">
-                        <i class="fa-solid fa-arrow-down"></i> + ถอยหลัง
-                    </button>
-                    <button onclick="addStep('LEFT', 60, 0.8)" class="btn-chubby px-3 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-xs font-extrabold flex items-center gap-2">
-                        <i class="fa-solid fa-rotate-left"></i> + เลี้ยวซ้าย
-                    </button>
-                    <button onclick="addStep('RIGHT', 60, 0.8)" class="btn-chubby px-3 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-white text-xs font-extrabold flex items-center gap-2">
-                        <i class="fa-solid fa-rotate-right"></i> + เลี้ยวขวา
-                    </button>
-                    <button onclick="addStep('WAIT', 0, 1.0)" class="btn-chubby px-3 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-extrabold flex items-center gap-2">
-                        <i class="fa-solid fa-hourglass-half"></i> + รอเวลา
-                    </button>
-                    <button onclick="addStep('LED_RED', 100, 0.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-xs font-extrabold flex items-center gap-2">
-                        <i class="fa-solid fa-lightbulb"></i> + ไฟสีแดง
-                    </button>
-                    <button onclick="addStep('LED_GREEN', 100, 0.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-extrabold flex items-center gap-2">
-                        <i class="fa-solid fa-lightbulb"></i> + ไฟสีเขียว
-                    </button>
-                    <button onclick="addStep('BEEP', 100, 0.5)" class="btn-chubby px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-white text-xs font-extrabold flex items-center gap-2">
-                        <i class="fa-solid fa-music"></i> + เสียงแตร
-                    </button>
-                </div>
-
-                <!-- Sequence Steps Container -->
-                <div id="sequenceContainer" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1"></div>
-
-                <!-- Save Program Bar -->
-                <div class="mt-5 pt-4 border-t-2 border-slate-100 flex flex-col sm:flex-row gap-2">
-                    <input id="programNameInput" type="text" placeholder="ตั้งชื่อโปรเจกต์ เช่น ภารกิจซิ่งผ่านด่าน..." class="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-sky-400">
-                    <button onclick="saveCurrentProgramToDB()" class="btn-chubby px-5 py-2.5 rounded-2xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-black flex items-center justify-center gap-2 shadow">
-                        <i class="fa-solid fa-floppy-disk"></i> บันทึกไว้เล่นวันหลัง
-                    </button>
-                </div>
-            </div>
-
-            <!-- Saved Projects Library -->
-            <div class="bg-white rounded-3xl p-5 border-4 border-purple-200 shadow-xl">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-sm font-extrabold text-purple-700 flex items-center gap-2">
-                        <span>📚</span> กล่องเก็บผลงานของหนู
-                    </h2>
-                    <span id="savedCountBadge" class="text-xs font-bold bg-purple-100 text-purple-700 px-3 py-1 rounded-full">0 เรื่อง</span>
-                </div>
-                <div id="savedProgramsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
-            </div>
-
+        <div class="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between gap-2">
+          <div class="px-2.5 py-1 rounded-xl bg-sky-950/90 border border-sky-400/50 text-sky-200 text-[11px] font-bold truncate">
+            <i class="fa-solid fa-tv text-sky-400 mr-1"></i><span id="hudScreenText">จอภาพ: พร้อมทำงาน</span>
+          </div>
+          <div class="px-2.5 py-1 rounded-xl bg-amber-400 text-amber-950 text-xs font-black">
+            🏆 <span id="hudScoreText">0 : 0</span>
+          </div>
         </div>
-    </main>
+      </div>
 
-    <!-- Parental Gate Modal -->
-    <div id="parentalModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-slate-300 shadow-2xl text-center">
-            <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-3xl mb-3">
-                🔒
+      <!-- Simulated Tudao Sensors -->
+      <div class="mt-3 p-3 rounded-2xl bg-sky-50 border-2 border-sky-100">
+        <div class="text-xs font-extrabold text-sky-800 mb-2"><i class="fa-solid fa-satellite-dish mr-1"></i>จำลองค่าเซ็นเซอร์ (สำหรับทดสอบบล็อก If-Else)</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] font-bold">
+          <div class="bg-white p-2 rounded-xl border border-sky-200">
+            <div class="flex justify-between"><span>🔊 อัลตราโซนิก</span><span id="valUltrasound" class="text-sky-600 font-black">25 cm</span></div>
+            <input id="simUltrasound" type="range" min="1" max="100" value="25" oninput="updateSensorUI()" class="w-full accent-sky-500 mt-1">
+          </div>
+          <div class="bg-white p-2 rounded-xl border border-sky-200">
+            <div class="flex justify-between"><span>📏 ระยะ S1/S2</span><span id="valDistance" class="text-sky-600 font-black">30/40</span></div>
+            <div class="flex gap-1 mt-1">
+              <input id="simDist1" type="number" value="30" oninput="updateSensorUI()" class="w-1/2 bg-slate-50 border rounded text-center font-black">
+              <input id="simDist2" type="number" value="40" oninput="updateSensorUI()" class="w-1/2 bg-slate-50 border rounded text-center font-black">
             </div>
-            <h3 class="text-lg font-black text-slate-800 mb-1">สำหรับคุณพ่อคุณแม่</h3>
-            <p class="text-xs font-bold text-slate-500 mb-4">กรุณาตอบคำถามคณิตศาสตร์ง่ายๆ เพื่อเข้าสู่หน้าตั้งค่า:</p>
-            
-            <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-200 mb-4">
-                <span id="mathQuizQuestion" class="text-2xl font-black text-amber-900 tracking-wider">7 + 5 = ?</span>
+          </div>
+          <div class="bg-white p-2 rounded-xl border border-sky-200">
+            <div class="flex justify-between"><span>🎤 ไมค์</span><span id="valMic" class="text-sky-600 font-black">45 dB</span></div>
+            <input id="simMic" type="range" min="0" max="100" value="45" oninput="updateSensorUI()" class="w-full accent-sky-500 mt-1">
+          </div>
+          <div class="bg-white p-2 rounded-xl border border-sky-200">
+            <div class="flex justify-between"><span>🧭 ไจโร X/Y</span><span id="valGyro" class="text-sky-600 font-black">0°/0°</span></div>
+            <div class="flex gap-1 mt-1">
+              <input id="simGyroX" type="number" value="0" oninput="updateSensorUI()" class="w-1/2 bg-slate-50 border rounded text-center font-black">
+              <input id="simGyroY" type="number" value="0" oninput="updateSensorUI()" class="w-1/2 bg-slate-50 border rounded text-center font-black">
             </div>
-
-            <input id="mathQuizAnswer" type="number" placeholder="พิมพ์คำตอบที่นี่" class="w-full text-center text-xl font-black bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2 mb-4 focus:outline-none focus:border-amber-400">
-
-            <div class="flex gap-2">
-                <button onclick="closeParentalModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200">ยกเลิก</button>
-                <button onclick="verifyParentalAccess()" class="flex-1 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-black shadow">ยืนยัน</button>
+          </div>
+          <div class="bg-white p-2 rounded-xl border border-sky-200 col-span-2 flex items-center justify-between">
+            <span>🛤️ Tracking (ซ้าย/ขวา):</span>
+            <div class="flex gap-1.5">
+              <select id="simTrackL" class="bg-sky-50 border border-sky-200 rounded px-1.5 py-0.5 text-sky-700 font-black">
+                <option value="NO">ซ้าย:NO (ทับเส้น)</option><option value="YES">ซ้าย:YES (ออกเส้น)</option>
+              </select>
+              <select id="simTrackR" class="bg-sky-50 border border-sky-200 rounded px-1.5 py-0.5 text-sky-700 font-black">
+                <option value="NO">ขวา:NO (ทับเส้น)</option><option value="YES">ขวา:YES (ออกเส้น)</option>
+              </select>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
-    <!-- Parent Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-xl w-full p-6 border-4 border-sky-300 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between pb-3 border-b-2 border-slate-100">
-                <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-sliders text-sky-500"></i> ตั้งค่าระบบ AI & บลูทูธ Apitor (สำหรับผู้ปกครอง)
-                </h3>
-                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 text-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-
-            <div class="space-y-4 mt-4 text-xs font-bold">
-                <!-- Gemini API Key -->
-                <div class="p-4 rounded-2xl bg-indigo-50 border-2 border-indigo-200">
-                    <label class="block font-black text-indigo-900 mb-1">
-                        <i class="fa-solid fa-key mr-1"></i> Gemini API Key (สำหรับโมเดล gemini-3.5-flash-lite)
-                    </label>
-                    <input id="cfgApiKey" type="password" placeholder="AIzaSy..." class="w-full bg-white border-2 border-indigo-200 rounded-xl px-3.5 py-2 text-slate-800 font-mono focus:outline-none focus:border-indigo-400">
-                    <p class="text-[11px] text-slate-500 mt-1 font-semibold">คีย์จะถูกบันทึกในเครื่องนี้ผ่าน IndexedDB เท่านั้น ไม่มีการส่งไปภายนอก</p>
-                </div>
-
-                <!-- BLE Services -->
-                <div class="p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 space-y-2">
-                    <div class="font-black text-slate-700">ตั้งค่า Service / Characteristic UUID (เว้นว่างไว้เพื่อค้นหาอัตโนมัติ)</div>
-                    <div>
-                        <label class="text-slate-500 block mb-1">Service UUID:</label>
-                        <input id="cfgServiceUuid" type="text" placeholder="6e400001-b5a3-f393-e0a9-e50e24dcca9e" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 font-mono text-slate-700">
-                    </div>
-                    <div>
-                        <label class="text-slate-500 block mb-1">Write Characteristic UUID:</label>
-                        <input id="cfgCharUuid" type="text" placeholder="6e400002-b5a3-f393-e0a9-e50e24dcca9e" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1.5 font-mono text-slate-700">
-                    </div>
-                </div>
-
-                <!-- Frame & Motor Options -->
-                <div class="p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 space-y-2">
-                    <div class="font-black text-slate-700">การตั้งค่าแพ็กเก็ต & ทิศทางมอเตอร์</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-slate-500 block mb-1">Header 1 (Hex):</label>
-                            <input id="cfgHdr1" type="text" value="55" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1 font-mono text-slate-700">
-                        </div>
-                        <div>
-                            <label class="text-slate-500 block mb-1">Header 2 (Hex):</label>
-                            <input id="cfgHdr2" type="text" value="AA" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-1 font-mono text-slate-700">
-                        </div>
-                    </div>
-                    <div class="pt-1">
-                        <label class="flex items-center gap-2 cursor-pointer text-slate-700">
-                            <input id="cfgInvertMotor" type="checkbox" class="accent-sky-500 w-4 h-4 rounded">
-                            <span>สลับทิศทางมอเตอร์ด้านขวา (Invert Right Motor)</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-end gap-2">
-                <button onclick="closeSettingsModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200">ยกเลิก</button>
-                <button onclick="saveConfigToDB()" class="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-white text-xs font-black shadow">บันทึกการตั้งค่า</button>
-            </div>
+    <!-- Joypad, Piano & Quick LED -->
+    <div class="bg-white rounded-3xl p-5 border-4 border-emerald-200 shadow-xl">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-extrabold text-emerald-600">🎮 รีโมทบังคับหุ่นยนต์ & ทดสอบด่วน</h2>
+        <div class="flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200 text-xs font-bold">
+          <span>ความเร็ว:</span>
+          <input id="manualSpeed" type="range" min="10" max="100" value="70" oninput="document.getElementById('manualSpeedVal').textContent=this.value+'%'" class="w-20 accent-emerald-500">
+          <span id="manualSpeedVal" class="font-extrabold text-emerald-600">70%</span>
         </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2.5 max-w-[240px] mx-auto my-2">
+        <div></div>
+        <button onmousedown="manualHold('FORWARD')" onmouseup="manualRelease()" ontouchstart="manualHold('FORWARD')" ontouchend="manualRelease()" class="btn-chubby h-14 rounded-2xl bg-sky-500 text-white font-extrabold text-xs"><i class="fa-solid fa-arrow-up block text-base"></i>เดินหน้า</button>
+        <div></div>
+        <button onmousedown="manualHold('LEFT')" onmouseup="manualRelease()" ontouchstart="manualHold('LEFT')" ontouchend="manualRelease()" class="btn-chubby h-14 rounded-2xl bg-sky-500 text-white font-extrabold text-xs"><i class="fa-solid fa-arrow-left block text-base"></i>เลี้ยวซ้าย</button>
+        <button onclick="executeTudaoCommand({type:'motorstop',port:'ALL',duration:0.2})" class="btn-chubby h-14 rounded-2xl bg-rose-500 text-white font-extrabold text-xs"><i class="fa-solid fa-hand block text-base"></i>หยุด</button>
+        <button onmousedown="manualHold('RIGHT')" onmouseup="manualRelease()" ontouchstart="manualHold('RIGHT')" ontouchend="manualRelease()" class="btn-chubby h-14 rounded-2xl bg-sky-500 text-white font-extrabold text-xs"><i class="fa-solid fa-arrow-right block text-base"></i>เลี้ยวขวา</button>
+        <div></div>
+        <button onmousedown="manualHold('BACKWARD')" onmouseup="manualRelease()" ontouchstart="manualHold('BACKWARD')" ontouchend="manualRelease()" class="btn-chubby h-14 rounded-2xl bg-sky-500 text-white font-extrabold text-xs"><i class="fa-solid fa-arrow-down block text-base"></i>ถอยหลัง</button>
+        <div></div>
+      </div>
+
+      <!-- 7 Musical Notes (Tudao_gamut) -->
+      <div class="mt-3 pt-3 border-t border-slate-100">
+        <div class="text-[11px] font-bold text-slate-500 mb-1.5">🎹 โน้ตดนตรี 7 เสียง (Tudao_gamut 1C - 7B):</div>
+        <div class="grid grid-cols-7 gap-1.5">
+          <button onclick="executeTudaoCommand({type:'gamut',gamut:'1C',duration:0.4})" class="btn-chubby py-1.5 rounded-xl bg-rose-500 text-white text-[11px] font-black">Do<br>1C</button>
+          <button onclick="executeTudaoCommand({type:'gamut',gamut:'2D',duration:0.4})" class="btn-chubby py-1.5 rounded-xl bg-orange-500 text-white text-[11px] font-black">Re<br>2D</button>
+          <button onclick="executeTudaoCommand({type:'gamut',gamut:'3E',duration:0.4})" class="btn-chubby py-1.5 rounded-xl bg-amber-400 text-amber-950 text-[11px] font-black">Mi<br>3E</button>
+          <button onclick="executeTudaoCommand({type:'gamut',gamut:'4F',duration:0.4})" class="btn-chubby py-1.5 rounded-xl bg-emerald-500 text-white text-[11px] font-black">Fa<br>4F</button>
+          <button onclick="executeTudaoCommand({type:'gamut',gamut:'5G',duration:0.4})" class="btn-chubby py-1.5 rounded-xl bg-cyan-500 text-white text-[11px] font-black">Sol<br>5G</button>
+          <button onclick="executeTudaoCommand({type:'gamut',gamut:'6A',duration:0.4})" class="btn-chubby py-1.5 rounded-xl bg-blue-500 text-white text-[11px] font-black">La<br>6A</button>
+          <button onclick="executeTudaoCommand({type:'gamut',gamut:'7B',duration:0.4})" class="btn-chubby py-1.5 rounded-xl bg-purple-500 text-white text-[11px] font-black">Si<br>7B</button>
+        </div>
+      </div>
+
+      <!-- Quick LED Colors (Tudao_led COLOR0-7) -->
+      <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
+        <span class="text-[11px] font-bold text-slate-500 mr-1">💡 ไฟ LED:</span>
+        <button onclick="executeTudaoCommand({type:'ledcolor',led:'ALL',color:'COLOR1'})" class="px-2 py-1 rounded-lg bg-rose-500 text-white text-[11px] font-bold">แดง</button>
+        <button onclick="executeTudaoCommand({type:'ledcolor',led:'ALL',color:'COLOR2'})" class="px-2 py-1 rounded-lg bg-orange-500 text-white text-[11px] font-bold">ส้ม</button>
+        <button onclick="executeTudaoCommand({type:'ledcolor',led:'ALL',color:'COLOR3'})" class="px-2 py-1 rounded-lg bg-amber-400 text-amber-950 text-[11px] font-bold">เหลือง</button>
+        <button onclick="executeTudaoCommand({type:'ledcolor',led:'ALL',color:'COLOR4'})" class="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[11px] font-bold">เขียว</button>
+        <button onclick="executeTudaoCommand({type:'ledcolor',led:'ALL',color:'COLOR5'})" class="px-2 py-1 rounded-lg bg-cyan-500 text-white text-[11px] font-bold">ฟ้า</button>
+        <button onclick="executeTudaoCommand({type:'ledcolor',led:'ALL',color:'COLOR6'})" class="px-2 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold">น้ำเงิน</button>
+        <button onclick="executeTudaoCommand({type:'ledcolor',led:'ALL',color:'COLOR7'})" class="px-2 py-1 rounded-lg bg-purple-600 text-white text-[11px] font-bold">ม่วง</button>
+        <button onclick="executeTudaoCommand({type:'ledcolor',led:'ALL',color:'COLOR0'})" class="px-2 py-1 rounded-lg bg-slate-600 text-white text-[11px] font-bold">ปิด</button>
+      </div>
     </div>
 
-    <script>
-        // ==========================================
-        // 1. INDEXEDDB ENGINE
-        // ==========================================
-        const DB_NAME = 'ApitorRobotKidsDB';
-        const DB_VERSION = 1;
-        let dbInstance = null;
+    <!-- Console Log -->
+    <div class="bg-white rounded-3xl p-4 border-2 border-slate-200">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-extrabold text-slate-500"><i class="fa-solid fa-terminal text-purple-500 mr-1"></i>บันทึกคำสั่ง Tudao Lua & บลูทูธ</span>
+        <button onclick="document.getElementById('bleLogBox').innerHTML=''" class="text-[11px] text-slate-400 hover:text-slate-600 font-bold">ล้างข้อความ</button>
+      </div>
+      <div id="bleLogBox" class="h-28 overflow-y-auto bg-slate-900 rounded-xl p-2.5 font-mono text-[11px] text-emerald-400 space-y-1">
+        <div class="text-slate-400">-- พร้อมทำงาน: รองรับชุดคำสั่ง Tudao Lua และ Web Bluetooth --</div>
+      </div>
+    </div>
+  </div>
 
-        const defaultConfig = {
-            apiKey: '',
-            serviceUuid: '',
-            charUuid: '',
-            header1: '55',
-            header2: 'AA',
-            invertRightMotor: false
-        };
+  <!-- Right Column (7 cols) -->
+  <div class="lg:col-span-7 space-y-6">
 
-        let appConfig = JSON.parse(JSON.stringify(defaultConfig));
+    <!-- AI Commander -->
+    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-5 border-4 border-indigo-300 shadow-xl text-white">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-black">✨ พี่ AI ผู้ช่วยสร้างบล็อกคำสั่ง Tudao Lua</h2>
+        <span class="text-xs bg-white/20 px-3 py-1 rounded-full font-bold">gemini-2.5-flash</span>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2 mb-3">
+        <input id="aiPromptInput" type="text" placeholder="สั่งหุ่นยนต์ เช่น เดินหน้า เปิดไฟสีม่วง พูดว่าสวัสดี เล่นโน้ต โด เร มี..." class="flex-1 bg-white text-slate-800 rounded-2xl px-4 py-3 text-xs font-bold focus:outline-none">
+        <button id="btnAiGenerate" onclick="generateCodeWithAI()" class="btn-chubby px-6 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs whitespace-nowrap">
+          <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>เสกบล็อกคำสั่ง!
+        </button>
+      </div>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-xs font-bold text-indigo-100">ภารกิจตัวอย่าง:</span>
+        <button onclick="loadPresetMission('square')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold">🟩 วิ่งสี่เหลี่ยม + ไฟ LED</button>
+        <button onclick="loadPresetMission('concert')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold">🎵 โน้ตดนตรี 7 เสียง + BGM</button>
+        <button onclick="loadPresetMission('obstacle')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold">🛡️ เช็คอัลตราโซนิกหลบสิ่งกีดขวาง</button>
+        <button onclick="loadPresetMission('scoreboard')" class="px-2.5 py-1 rounded-xl bg-white/20 hover:bg-white/30 text-[11px] font-bold">🗣️ พูดทักทาย & โชว์คะแนน</button>
+      </div>
+    </div>
 
-        function initIndexedDB() {
-            return new Promise((resolve, reject) => {
-                const req = indexedDB.open(DB_NAME, DB_VERSION);
-                req.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains('settings')) {
-                        db.createObjectStore('settings', { keyPath: 'id' });
-                    }
-                    if (!db.objectStoreNames.contains('programs')) {
-                        db.createObjectStore('programs', { keyPath: 'id', autoIncrement: true });
-                    }
-                };
-                req.onsuccess = (e) => {
-                    dbInstance = e.target.result;
-                    resolve(dbInstance);
-                };
-                req.onerror = (e) => reject(e.target.error);
-            });
+    <!-- Tudao Block Coding Workspace -->
+    <div class="bg-white rounded-3xl p-5 border-4 border-amber-200 shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-lg font-black text-slate-800">🧩 กระดานบล็อกคำสั่ง Tudao (Blockly -> Lua)</h2>
+          <p class="text-xs font-semibold text-slate-400">ครบทุกบล็อกจาก tudao_blocks.js และ tudao_blocks_generator_lua.js</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="runCode()" class="btn-chubby px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs flex items-center gap-2">
+            <i class="fa-solid fa-play"></i> เริ่มรันโค้ด (Run)
+          </button>
+          <button onclick="stopSequence()" class="btn-chubby px-4 py-2.5 rounded-2xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs">
+            <i class="fa-solid fa-stop mr-1"></i>หยุด
+          </button>
+          <button onclick="undo(false)" class="btn-chubby px-3 py-2.5 rounded-2xl bg-slate-100 text-slate-600 text-xs font-bold border border-slate-300" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
+          <button onclick="clearAll()" class="btn-chubby px-3 py-2.5 rounded-2xl bg-slate-100 text-rose-500 text-xs font-bold border border-slate-300" title="ล้างกระดาน"><i class="fa-solid fa-trash-can"></i></button>
+        </div>
+      </div>
+
+      <!-- Palette Tabs -->
+      <div class="flex flex-wrap gap-1.5 mb-3 border-b pb-2">
+        <button onclick="switchPaletteTab('motor')" id="tab-motor" class="px-3 py-1.5 rounded-xl text-xs font-black bg-teal-500 text-white">⚙️ มอเตอร์ & ขับเคลื่อน</button>
+        <button onclick="switchPaletteTab('led_display')" id="tab-led_display" class="px-3 py-1.5 rounded-xl text-xs font-black bg-slate-100 text-slate-600">💡 ไฟ LED & หน้าจอ</button>
+        <button onclick="switchPaletteTab('sound_media')" id="tab-sound_media" class="px-3 py-1.5 rounded-xl text-xs font-black bg-slate-100 text-slate-600">🎵 เสียง ดนตรี & พูด</button>
+        <button onclick="switchPaletteTab('control_sensor')" id="tab-control_sensor" class="px-3 py-1.5 rounded-xl text-xs font-black bg-slate-100 text-slate-600">🔀 รอเวลา & เซ็นเซอร์</button>
+      </div>
+
+      <!-- Tab 1: Motor -->
+      <div id="palette-motor" class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4 p-3 rounded-2xl bg-teal-50 border-2 border-teal-200">
+        <button onclick="addStep({type:'motoraction',port:'PORT1',direction:'CLOCKWISE',speed:70,duration:1.2})" class="btn-chubby px-3 py-2 rounded-xl bg-[#00ceb8] text-white text-xs font-extrabold">+ มอเตอร์ (PORT 1-3)</button>
+        <button onclick="addStep({type:'motorstop',port:'ALL',duration:0.2})" class="btn-chubby px-3 py-2 rounded-xl bg-teal-700 text-white text-xs font-extrabold">+ หยุดมอเตอร์ (Stop)</button>
+        <button onclick="addStep({type:'drive',action:'FORWARD',speed:75,duration:1.5})" class="btn-chubby px-3 py-2 rounded-xl bg-sky-500 text-white text-xs font-extrabold">+ เดินหน้าคู่ (P1+P2)</button>
+        <button onclick="addStep({type:'drive',action:'BACKWARD',speed:75,duration:1.5})" class="btn-chubby px-3 py-2 rounded-xl bg-sky-500 text-white text-xs font-extrabold">+ ถอยหลังคู่ (P1+P2)</button>
+        <button onclick="addStep({type:'drive',action:'LEFT',speed:65,duration:0.8})" class="btn-chubby px-3 py-2 rounded-xl bg-indigo-500 text-white text-xs font-extrabold">+ เลี้ยวซ้าย</button>
+        <button onclick="addStep({type:'drive',action:'RIGHT',speed:65,duration:0.8})" class="btn-chubby px-3 py-2 rounded-xl bg-indigo-500 text-white text-xs font-extrabold">+ เลี้ยวขวา</button>
+      </div>
+
+      <!-- Tab 2: LED & Display -->
+      <div id="palette-led_display" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 p-3 rounded-2xl bg-sky-50 border-2 border-sky-200">
+        <button onclick="addStep({type:'ledcolor',led:'ALL',color:'COLOR4',duration:0.5})" class="btn-chubby px-3 py-2 rounded-xl bg-[#21c0fa] text-white text-xs font-extrabold">+ ไฟ LED (COLOR0-7)</button>
+        <button onclick="addStep({type:'show_text',content:'สวัสดีครับ!',duration:1.0})" class="btn-chubby px-3 py-2 rounded-xl bg-sky-600 text-white text-xs font-extrabold">+ แสดงข้อความ</button>
+        <button onclick="addStep({type:'show_score',num1:1,num2:0,duration:1.0})" class="btn-chubby px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-extrabold">+ แสดงสกอร์ (Score)</button>
+        <button onclick="addStep({type:'playmovie',movie:'Robot_Intro',duration:1.2})" class="btn-chubby px-3 py-2 rounded-xl bg-rose-500 text-white text-xs font-extrabold">+ เล่นวิดีโอ (Movie)</button>
+      </div>
+
+      <!-- Tab 3: Sound & Media -->
+      <div id="palette-sound_media" class="hidden grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4 p-3 rounded-2xl bg-purple-50 border-2 border-purple-200">
+        <button onclick="addStep({type:'sound',sound:'SOUND_1',duration:0.7})" class="btn-chubby px-3 py-2 rounded-xl bg-[#21c0fa] text-white text-xs font-extrabold">+ เอฟเฟกต์เสียง (1-11)</button>
+        <button onclick="addStep({type:'gamut',gamut:'1C',duration:0.5})" class="btn-chubby px-3 py-2 rounded-xl bg-purple-500 text-white text-xs font-extrabold">+ โน้ตดนตรี 7 เสียง</button>
+        <button onclick="addStep({type:'say',text:'สวัสดีเพื่อนๆ',duration:1.2})" class="btn-chubby px-3 py-2 rounded-xl bg-pink-500 text-white text-xs font-extrabold">+ พูดข้อความ (Say)</button>
+        <button onclick="addStep({type:'bgstart',bgMusic:'BGM_1',duration:0.5})" class="btn-chubby px-3 py-2 rounded-xl bg-indigo-500 text-white text-xs font-extrabold">+ เปิดเพลง BGM (1-8)</button>
+        <button onclick="addStep({type:'bgend',duration:0.3})" class="btn-chubby px-3 py-2 rounded-xl bg-slate-600 text-white text-xs font-extrabold">+ ปิดเพลง BGM</button>
+        <button onclick="addStep({type:'recording',edit:'voice_1',duration:1.0})" class="btn-chubby px-3 py-2 rounded-xl bg-rose-500 text-white text-xs font-extrabold">+ บันทึกเสียง</button>
+      </div>
+
+      <!-- Tab 4: Control & Sensor -->
+      <div id="palette-control_sensor" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4 p-3 rounded-2xl bg-amber-50 border-2 border-amber-200">
+        <button onclick="addStep({type:'sleep',time:1.5})" class="btn-chubby px-3 py-2 rounded-xl bg-[#fbb13b] text-white text-xs font-extrabold">+ รอเวลา (Tudao_sleep)</button>
+        <button onclick="addStep({type:'if_else',sensor:'ultrasound',operator:'<',threshold:20,trueAction:'STOP_RED',falseAction:'FORWARD_GREEN',duration:1.0})" class="btn-chubby px-3 py-2 rounded-xl bg-amber-600 text-white text-xs font-extrabold">+ เงื่อนไข If-Else เซ็นเซอร์</button>
+        <button onclick="addStep({type:'if_tracking',left:'NO',right:'NO',trueAction:'FORWARD_GREEN',falseAction:'STOP_RED',duration:1.0})" class="btn-chubby px-3 py-2 rounded-xl bg-[#5ca3fb] text-white text-xs font-extrabold">+ เช็คเส้น Tracking</button>
+      </div>
+
+      <!-- Begin Hat Block -->
+      <div class="mb-2 flex items-center gap-2 px-4 py-2 rounded-t-2xl rounded-br-2xl bg-[#62d66a] text-white font-black text-xs w-fit shadow">
+        <i class="fa-solid fa-flag"></i> เมื่อคลิกเริ่มทำงาน (begin)
+      </div>
+
+      <!-- Sequence List -->
+      <div id="sequenceContainer" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1 pl-2 border-l-4 border-[#62d66a]"></div>
+
+      <!-- Live Lua Code Preview -->
+      <div class="mt-4 pt-3 border-t border-slate-100">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-extrabold text-slate-700"><i class="fa-solid fa-code text-amber-500 mr-1"></i>โค้ดภาษา Lua ที่สร้างอัตโนมัติ (Tudao Lua SDK)</span>
+          <div class="flex gap-1.5">
+            <button onclick="copyLuaCode()" class="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold">คัดลอกโค้ด Lua</button>
+            <button onclick="generationCode()" class="px-2.5 py-1 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-700 text-[11px] font-bold">ส่งเข้า Native Bridge</button>
+          </div>
+        </div>
+        <pre id="luaCodePreview" class="bg-slate-900 text-amber-300 font-mono text-xs p-3 rounded-2xl overflow-x-auto max-h-36 border border-slate-700"></pre>
+      </div>
+
+      <!-- Save Project -->
+      <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row gap-2">
+        <input id="programNameInput" type="text" placeholder="ตั้งชื่อโปรเจกต์..." class="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-2 text-xs font-bold">
+        <button onclick="saveCurrentProgramToDB()" class="btn-chubby px-5 py-2 rounded-2xl bg-sky-500 text-white text-xs font-black"><i class="fa-solid fa-floppy-disk mr-1"></i>บันทึกโปรเจกต์</button>
+      </div>
+    </div>
+
+    <!-- Saved Programs -->
+    <div class="bg-white rounded-3xl p-5 border-4 border-purple-200 shadow-xl">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-extrabold text-purple-700">📚 กล่องเก็บผลงานของหนู</h2>
+        <span id="savedCountBadge" class="text-xs font-bold bg-purple-100 text-purple-700 px-3 py-1 rounded-full">0 เรื่อง</span>
+      </div>
+      <div id="savedProgramsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Parental Gate Modal -->
+<div id="parentalModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-sm w-full p-6 border-4 border-slate-300 shadow-2xl text-center">
+    <div class="text-3xl mb-2">🔒</div>
+    <h3 class="text-lg font-black text-slate-800 mb-1">สำหรับผู้ปกครอง</h3>
+    <p class="text-xs font-bold text-slate-500 mb-3">ตอบคำถามคณิตศาสตร์เพื่อเปิดหน้าตั้งค่า:</p>
+    <div class="bg-amber-50 p-3 rounded-2xl border-2 border-amber-200 mb-3">
+      <span id="mathQuizQuestion" class="text-2xl font-black text-amber-900">7 + 5 = ?</span>
+    </div>
+    <input id="mathQuizAnswer" type="number" class="w-full text-center text-xl font-black bg-slate-50 border-2 border-slate-300 rounded-xl px-4 py-2 mb-2">
+    <p id="mathQuizError" class="text-xs font-bold text-rose-500 mb-2 hidden">คำตอบยังไม่ถูกต้อง ลองอีกครั้งครับ</p>
+    <div class="flex gap-2">
+      <button onclick="closeParentalModal()" class="flex-1 py-2 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">ยกเลิก</button>
+      <button onclick="verifyParentalAccess()" class="flex-1 py-2 rounded-xl bg-sky-500 text-white text-xs font-black">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl max-w-xl w-full p-6 border-4 border-sky-300 shadow-2xl max-h-[90vh] overflow-y-auto text-xs font-bold space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b">
+      <h3 class="text-base font-black text-slate-800">⚙️ ตั้งค่าระบบ AI & บลูทูธ Tudao / Apitor</h3>
+      <button onclick="closeSettingsModal()" class="text-slate-400 text-lg"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="p-3 rounded-2xl bg-indigo-50 border border-indigo-200">
+      <label class="block font-black text-indigo-900 mb-1">Gemini API Key (เว้นว่างได้ มีระบบแปลคำสั่งภาษาไทยในตัว)</label>
+      <input id="cfgApiKey" type="password" placeholder="AIzaSy..." class="w-full bg-white border rounded-xl px-3 py-1.5 font-mono">
+    </div>
+    <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+      <label class="block font-black text-emerald-900 mb-1">โหมดส่งคำสั่ง (Protocol Mode)</label>
+      <select id="cfgProtocolMode" class="w-full bg-white border rounded-xl px-3 py-1.5">
+        <option value="BOTH">ส่งทั้งแพ็กเก็ต Hex (BLE) + สคริปต์ Tudao Lua</option>
+        <option value="LUA_STRING">ส่งเป็นข้อความคำสั่ง Tudao Lua (UTF-8 Text)</option>
+        <option value="BINARY_HEX">ส่งเฉพาะแพ็กเก็ต Binary Hex (55 AA ...)</option>
+      </select>
+    </div>
+    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+      <div><label class="block text-slate-500">Service UUID:</label><input id="cfgServiceUuid" type="text" placeholder="6e400001-b5a3-f393-e0a9-e50e24dcca9e" class="w-full bg-white border rounded-lg px-2.5 py-1 font-mono"></div>
+      <div><label class="block text-slate-500">Write Characteristic UUID:</label><input id="cfgCharUuid" type="text" placeholder="6e400002-b5a3-f393-e0a9-e50e24dcca9e" class="w-full bg-white border rounded-lg px-2.5 py-1 font-mono"></div>
+      <div class="grid grid-cols-2 gap-2">
+        <div><label class="block text-slate-500">Header 1 (Hex):</label><input id="cfgHdr1" type="text" value="55" class="w-full bg-white border rounded-lg px-2.5 py-1 font-mono"></div>
+        <div><label class="block text-slate-500">Header 2 (Hex):</label><input id="cfgHdr2" type="text" value="AA" class="w-full bg-white border rounded-lg px-2.5 py-1 font-mono"></div>
+      </div>
+      <label class="flex items-center gap-2 pt-1 cursor-pointer"><input id="cfgInvertMotor" type="checkbox" class="accent-sky-500"><span>สลับทิศทางมอเตอร์ขวา (PORT2)</span></label>
+    </div>
+    <div class="flex justify-end gap-2 pt-2">
+      <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl bg-slate-100">ยกเลิก</button>
+      <button onclick="saveConfigToDB()" class="px-5 py-2 rounded-xl bg-sky-500 text-white font-black">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 0. Notice & script.js Native Bridge Compatibility
+let noticeTimer = null;
+function showNotice(text, icon = '💡') {
+  const b = document.getElementById('appNoticeBanner');
+  document.getElementById('appNoticeIcon').textContent = icon;
+  document.getElementById('appNoticeText').textContent = text;
+  b.classList.remove('hidden');
+  if (noticeTimer) clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(hideNotice, 3500);
+}
+function hideNotice() { document.getElementById('appNoticeBanner').classList.add('hidden'); }
+
+window.jsCallJavaInterface = window.jsCallJavaInterface || {
+  onBack: () => appendLog('[Bridge] onBack()'),
+  onGenerationCode: (code) => appendLog('[Bridge] onGenerationCode:\n' + code.trim()),
+  onRunCode: (code) => appendLog('[Bridge] onRunCode:\n' + code.trim()),
+  onSaveCode: (b64) => appendLog('[Bridge] onSaveCode (' + b64.length + ' chars)')
+};
+
+// 1. Tudao Dictionaries (from tudao_blocks.js & tudao_blocks_generator_lua.js)
+const TUDAO_COLOR_MAP = {
+  COLOR0: { name: 'ปิดไฟ (COLOR0)', hex: '#334155', rgb: [0,0,0] },
+  COLOR1: { name: 'สีแดง (COLOR1)', hex: '#EF4444', rgb: [255,0,0] },
+  COLOR2: { name: 'สีส้ม (COLOR2)', hex: '#F97316', rgb: [255,127,0] },
+  COLOR3: { name: 'สีเหลือง (COLOR3)', hex: '#EAB308', rgb: [255,255,0] },
+  COLOR4: { name: 'สีเขียว (COLOR4)', hex: '#10B981', rgb: [0,255,0] },
+  COLOR5: { name: 'สีฟ้า (COLOR5)', hex: '#06B6D4', rgb: [0,255,255] },
+  COLOR6: { name: 'สีน้ำเงิน (COLOR6)', hex: '#3B82F6', rgb: [0,0,255] },
+  COLOR7: { name: 'สีม่วง (COLOR7)', hex: '#A855F7', rgb: [139,0,255] }
+};
+const TUDAO_GAMUT_FREQ = {
+  '1C': { label: 'Do (1C)', freq: 261.63, idx: 1 },
+  '2D': { label: 'Re (2D)', freq: 293.66, idx: 2 },
+  '3E': { label: 'Mi (3E)', freq: 329.63, idx: 3 },
+  '4F': { label: 'Fa (4F)', freq: 349.23, idx: 4 },
+  '5G': { label: 'Sol (5G)', freq: 392.00, idx: 5 },
+  '6A': { label: 'La (6A)', freq: 440.00, idx: 6 },
+  '7B': { label: 'Si (7B)', freq: 493.88, idx: 7 }
+};
+
+// 2. IndexedDB
+const DB_NAME = 'ApitorRobotKidsDB';
+let dbInstance = null;
+const defaultConfig = { apiKey: '', protocolMode: 'BOTH', serviceUuid: '', charUuid: '', header1: '55', header2: 'AA', invertRightMotor: false };
+let appConfig = { ...defaultConfig };
+
+function initIndexedDB() {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('programs')) db.createObjectStore('programs', { keyPath: 'id', autoIncrement: true });
+      };
+      req.onsuccess = (e) => { dbInstance = e.target.result; resolve(dbInstance); };
+      req.onerror = () => resolve(null);
+    } catch (e) { resolve(null); }
+  });
+}
+function loadConfigFromDB() {
+  if (!dbInstance) return;
+  const req = dbInstance.transaction('settings', 'readonly').objectStore('settings').get('mainConfig');
+  req.onsuccess = () => { if (req.result?.data) appConfig = { ...defaultConfig, ...req.result.data }; };
+}
+function saveConfigToDB() {
+  appConfig.apiKey = document.getElementById('cfgApiKey').value.trim();
+  appConfig.protocolMode = document.getElementById('cfgProtocolMode').value;
+  appConfig.serviceUuid = document.getElementById('cfgServiceUuid').value.trim().toLowerCase();
+  appConfig.charUuid = document.getElementById('cfgCharUuid').value.trim().toLowerCase();
+  appConfig.header1 = document.getElementById('cfgHdr1').value.trim() || '55';
+  appConfig.header2 = document.getElementById('cfgHdr2').value.trim() || 'AA';
+  appConfig.invertRightMotor = document.getElementById('cfgInvertMotor').checked;
+  if (dbInstance) {
+    const tx = dbInstance.transaction('settings', 'readwrite');
+    tx.objectStore('settings').put({ id: 'mainConfig', data: appConfig });
+    tx.oncomplete = () => { showNotice('บันทึกการตั้งค่าแล้ว', '✅'); closeSettingsModal(); };
+  } else closeSettingsModal();
+}
+
+// 3. Tudao Lua Code Generator & Binary Packet Builder
+function branchActionToLua(actKey) {
+  if (actKey === 'STOP_RED') return "Tudao_motorStop('ALL')\n  Tudao_led('ALL','COLOR1')\n";
+  if (actKey === 'BACK_BEEP') return "Tudao_motorAction('PORT1',70,'ANTICLOCKWISE')\n  Tudao_motorAction('PORT2',70,'ANTICLOCKWISE')\n  Tudao_playSound('SOUND_1')\n";
+  if (actKey === 'TURN_LEFT') return "Tudao_motorAction('PORT1',65,'ANTICLOCKWISE')\n  Tudao_motorAction('PORT2',65,'CLOCKWISE')\n";
+  return "Tudao_motorAction('PORT1',70,'CLOCKWISE')\n  Tudao_motorAction('PORT2',70,'CLOCKWISE')\n  Tudao_led('ALL','COLOR4')\n";
+}
+
+function stepToLuaCode(step) {
+  switch (step.type) {
+    case 'sleep': return `Tudao_sleep(${Number(step.time)||1})\n`;
+    case 'motoraction': return `Tudao_motorAction('${step.port||'PORT1'}',${Number(step.speed)||70},'${step.direction||'CLOCKWISE'}')\n`;
+    case 'motorstop': return `Tudao_motorStop('${step.port||'ALL'}')\n`;
+    case 'drive': {
+      const s = Number(step.speed)||70, d = Number(step.duration)||1.0;
+      const cw2 = appConfig.invertRightMotor ? 'ANTICLOCKWISE' : 'CLOCKWISE';
+      const ccw2 = appConfig.invertRightMotor ? 'CLOCKWISE' : 'ANTICLOCKWISE';
+      if (step.action === 'FORWARD') return `Tudao_motorAction('PORT1',${s},'CLOCKWISE')\nTudao_motorAction('PORT2',${s},'${cw2}')\nTudao_sleep(${d})\nTudao_motorStop('ALL')\n`;
+      if (step.action === 'BACKWARD') return `Tudao_motorAction('PORT1',${s},'ANTICLOCKWISE')\nTudao_motorAction('PORT2',${s},'${ccw2}')\nTudao_sleep(${d})\nTudao_motorStop('ALL')\n`;
+      if (step.action === 'LEFT') return `Tudao_motorAction('PORT1',${s},'ANTICLOCKWISE')\nTudao_motorAction('PORT2',${s},'${cw2}')\nTudao_sleep(${d})\nTudao_motorStop('ALL')\n`;
+      return `Tudao_motorAction('PORT1',${s},'CLOCKWISE')\nTudao_motorAction('PORT2',${s},'${ccw2}')\nTudao_sleep(${d})\nTudao_motorStop('ALL')\n`;
+    }
+    case 'ledcolor': return `Tudao_led('${step.led||'ALL'}','${step.color||'COLOR4'}')\n`;
+    case 'sound': return `Tudao_playSound('${step.sound||'SOUND_1'}')\n`;
+    case 'gamut': return `Tudao_gamut('${step.gamut||'1C'}')\n`;
+    case 'bgstart': return `Tudao_bgmStart('${step.bgMusic||'BGM_1'}')\n`;
+    case 'bgend': return `Tudao_bgmEnd()\n`;
+    case 'say': return `Tudao_say('${String(step.text||'สวัสดี').replace(/'/g,'')}')\n`;
+    case 'recording': return `Tudao_recording('${String(step.edit||'voice_1').replace(/'/g,'')}')\n`;
+    case 'playmovie': return `Tudao_playMovie('${String(step.movie||'movie_1').replace(/'/g,'')}')\n`;
+    case 'show_text': return `Tudao_showText('${String(step.content||'Hello').replace(/'/g,'')}')\n`;
+    case 'show_score': return `Tudao_showScore(${Number(step.num1)||0},${Number(step.num2)||0})\n`;
+    case 'if_else': {
+      const map = { ultrasound: 'Tudao_getUltrasoundValue()', mic: 'Tudao_getMicValue()', gyro_x: "Tudao_getGyroValue('OPTION_X')", gyro_y: "Tudao_getGyroValue('OPTION_Y')", dist1: "Tudao_distanceSensor('SENSOR1')", dist2: "Tudao_distanceSensor('SENSOR2')" };
+      const expr = map[step.sensor] || 'Tudao_getUltrasoundValue()';
+      return `if ${expr} ${step.operator||'<'} ${Number(step.threshold)||20} then\n  ${branchActionToLua(step.trueAction)}else\n  ${branchActionToLua(step.falseAction)}end\n`;
+    }
+    case 'if_tracking':
+      return `if Tudao_tracking('${step.left||'NO'}','${step.right||'NO'}') then\n  ${branchActionToLua(step.trueAction)}else\n  ${branchActionToLua(step.falseAction)}end\n`;
+    default: return '';
+  }
+}
+
+function generateWorkspaceLua() {
+  return commandSequence.length ? commandSequence.map(stepToLuaCode).join('') : '-- ยังไม่มีคำสั่งในกระดาน';
+}
+
+function buildApitorPacketFromCommand(cmd) {
+  const h1 = parseInt(appConfig.header1||'55', 16), h2 = parseInt(appConfig.header2||'AA', 16);
+  let payload = [0x06, 0x01, 0x00, 0x00, 0x00, 0x00];
+  if (cmd.type === 'motoraction') {
+    const spd = Math.max(0, Math.min(100, Math.round(cmd.speed||70)));
+    const pId = { PORT1: 1, PORT2: 2, PORT3: 3 }[cmd.port] || 1;
+    let dir = cmd.direction === 'ANTICLOCKWISE' ? 2 : 1;
+    if (cmd.port === 'PORT2' && appConfig.invertRightMotor) dir = dir === 1 ? 2 : 1;
+    payload = [0x05, 0x10, pId, dir, spd];
+  } else if (cmd.type === 'motorstop') {
+    payload = [0x04, 0x11, { ALL: 0, PORT1: 1, PORT2: 2, PORT3: 3 }[cmd.port] ?? 0, 0x00];
+  } else if (cmd.type === 'drive') {
+    const spd = Math.max(0, Math.min(100, Math.round(cmd.speed||70)));
+    let dA = 1, dB = appConfig.invertRightMotor ? 2 : 1;
+    if (cmd.action === 'BACKWARD') { dA = 2; dB = appConfig.invertRightMotor ? 1 : 2; }
+    else if (cmd.action === 'LEFT') { dA = 2; dB = appConfig.invertRightMotor ? 2 : 1; }
+    else if (cmd.action === 'RIGHT') { dA = 1; dB = appConfig.invertRightMotor ? 1 : 2; }
+    payload = [0x06, 0x01, dA, spd, dB, spd];
+  } else if (cmd.type === 'ledcolor') {
+    const c = TUDAO_COLOR_MAP[cmd.color] || TUDAO_COLOR_MAP.COLOR4;
+    payload = [0x06, 0x02, { ALL:0, LED1:1, LED2:2, LED3:3, LED4:4 }[cmd.led] ?? 0, ...c.rgb];
+  } else if (cmd.type === 'sound') {
+    payload = [0x04, 0x03, parseInt(String(cmd.sound||'1').replace(/\D/g,''),10)||1, 0x64];
+  } else if (cmd.type === 'gamut') {
+    payload = [0x04, 0x04, (TUDAO_GAMUT_FREQ[cmd.gamut]||TUDAO_GAMUT_FREQ['1C']).idx, 0x64];
+  } else if (cmd.type === 'show_score') {
+    payload = [0x04, 0x08, (cmd.num1||0)&0xFF, (cmd.num2||0)&0xFF];
+  }
+  let cs = 0;
+  for (const b of payload) cs ^= b;
+  const bytes = new Uint8Array([h1, h2, ...payload, cs]);
+  const formattedHex = Array.from(bytes).map(b => b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+  return { bytes, formattedHex };
+}
+
+// 4. Web Bluetooth
+let bleDevice = null, writeCharacteristic = null, isSimulationMode = true;
+const KNOWN_SERVICES = ['6e400001-b5a3-f393-e0a9-e50e24dcca9e','0000ffe0-0000-1000-8000-00805f9b34fb','0000fff0-0000-1000-8000-00805f9b34fb','0000ae00-0000-1000-8000-00805f9b34fb'];
+
+async function connectBluetooth() {
+  if (!navigator.bluetooth) { showNotice('เบราว์เซอร์นี้ไม่รองรับ Web Bluetooth กรุณาเปิดด้วย Chrome', '⚠️'); return; }
+  try {
+    const optionalServices = [...KNOWN_SERVICES];
+    if (appConfig.serviceUuid) optionalServices.push(appConfig.serviceUuid);
+    bleDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices });
+    bleDevice.addEventListener('gattserverdisconnected', () => { writeCharacteristic = null; updateBleBadge(false); });
+    const server = await bleDevice.gatt.connect();
+    const services = await server.getPrimaryServices();
+    writeCharacteristic = null;
+    for (const s of services) {
+      const chars = await s.getCharacteristics();
+      for (const c of chars) {
+        if (!writeCharacteristic && (c.properties.write || c.properties.writeWithoutResponse)) {
+          if (!appConfig.charUuid || c.uuid.toLowerCase().includes(appConfig.charUuid)) writeCharacteristic = c;
         }
-
-        async function loadConfigFromDB() {
-            if (!dbInstance) return;
-            const tx = dbInstance.transaction('settings', 'readonly');
-            const store = tx.objectStore('settings');
-            const req = store.get('mainConfig');
-            req.onsuccess = () => {
-                if (req.result && req.result.data) {
-                    appConfig = { ...defaultConfig, ...req.result.data };
-                }
-            };
-        }
-
-        async function saveConfigToDB() {
-            appConfig.apiKey = document.getElementById('cfgApiKey').value.trim();
-            appConfig.serviceUuid = document.getElementById('cfgServiceUuid').value.trim().toLowerCase();
-            appConfig.charUuid = document.getElementById('cfgCharUuid').value.trim().toLowerCase();
-            appConfig.header1 = document.getElementById('cfgHdr1').value.trim() || '55';
-            appConfig.header2 = document.getElementById('cfgHdr2').value.trim() || 'AA';
-            appConfig.invertRightMotor = document.getElementById('cfgInvertMotor').checked;
-
-            const tx = dbInstance.transaction('settings', 'readwrite');
-            tx.objectStore('settings').put({ id: 'mainConfig', data: appConfig });
-            tx.oncomplete = () => {
-                appendLog('[ตั้งค่า] บันทึกข้อมูลเรียบร้อยแล้วค่ะ/ครับ');
-                closeSettingsModal();
-            };
-        }
-
-        // ==========================================
-        // 2. APITOR PACKET BUILDER (WITH XOR CHECKSUM)
-        // ==========================================
-        function buildApitorPacket(action, speedPercent = 70) {
-            const h1 = parseInt(appConfig.header1 || '55', 16);
-            const h2 = parseInt(appConfig.header2 || 'AA', 16);
-            const spd = Math.max(0, Math.min(100, Math.round(speedPercent)));
-
-            let payload = [];
-            let dirA = 0x00;
-            let dirB = 0x00;
-
-            if (action === 'FORWARD') {
-                dirA = 0x01;
-                dirB = appConfig.invertRightMotor ? 0x02 : 0x01;
-                payload = [0x06, 0x01, dirA, spd, dirB, spd];
-            } else if (action === 'BACKWARD') {
-                dirA = 0x02;
-                dirB = appConfig.invertRightMotor ? 0x01 : 0x02;
-                payload = [0x06, 0x01, dirA, spd, dirB, spd];
-            } else if (action === 'LEFT') {
-                dirA = 0x02;
-                dirB = appConfig.invertRightMotor ? 0x02 : 0x01;
-                payload = [0x06, 0x01, dirA, spd, dirB, spd];
-            } else if (action === 'RIGHT') {
-                dirA = 0x01;
-                dirB = appConfig.invertRightMotor ? 0x01 : 0x02;
-                payload = [0x06, 0x01, dirA, spd, dirB, spd];
-            } else if (action === 'STOP') {
-                payload = [0x06, 0x01, 0x00, 0x00, 0x00, 0x00];
-            } else if (action === 'LED_RED') {
-                payload = [0x05, 0x02, 0xFF, 0x00, 0x00];
-            } else if (action === 'LED_GREEN') {
-                payload = [0x05, 0x02, 0x00, 0xFF, 0x00];
-            } else if (action === 'LED_BLUE') {
-                payload = [0x05, 0x02, 0x00, 0x00, 0xFF];
-            } else if (action === 'BEEP') {
-                payload = [0x04, 0x03, 0x01, 0x64];
-            } else {
-                payload = [0x06, 0x01, 0x00, 0x00, 0x00, 0x00];
-            }
-
-            let checksum = 0;
-            for (let i = 0; i < payload.length; i++) checksum ^= payload[i];
-
-            const rawBytes = new Uint8Array([h1, h2, ...payload, checksum]);
-            const formattedHex = Array.from(rawBytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
-            return { bytes: rawBytes, formattedHex };
-        }
-
-        // ==========================================
-        // 3. WEB BLUETOOTH ENGINE
-        // ==========================================
-        let bleDevice = null;
-        let bleServer = null;
-        let writeCharacteristic = null;
-        let isSimulationMode = true;
-
-        const KNOWN_SERVICES = [
-            '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
-            '0000ffe0-0000-1000-8000-00805f9b34fb',
-            '0000fff0-0000-1000-8000-00805f9b34fb',
-            '0000ae00-0000-1000-8000-00805f9b34fb'
-        ];
-
-        async function connectBluetooth() {
-            if (!navigator.bluetooth) {
-                alert('เครื่องนี้ยังไม่รองรับ Web Bluetooth ค่ะ กรุณาเปิดผ่าน Google Chrome บน Android หรือคอมพิวเตอร์นะคะ');
-                return;
-            }
-
-            try {
-                appendLog('[BLE] กำลังมองหาหุ่นยนต์...');
-                const optionalServices = [...KNOWN_SERVICES];
-                if (appConfig.serviceUuid) optionalServices.push(appConfig.serviceUuid);
-
-                bleDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: optionalServices
-                });
-
-                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
-                appendLog(`[BLE] เจอน้องหุ่นแล้ว: ${bleDevice.name || 'Apitor Robot'}`);
-
-                bleServer = await bleDevice.gatt.connect();
-                const services = await bleServer.getPrimaryServices();
-                writeCharacteristic = null;
-
-                for (const s of services) {
-                    const chars = await s.getCharacteristics();
-                    for (const c of chars) {
-                        if (!writeCharacteristic && (c.properties.write || c.properties.writeWithoutResponse)) {
-                            if (!appConfig.charUuid || c.uuid.toLowerCase().includes(appConfig.charUuid)) {
-                                writeCharacteristic = c;
-                            }
-                        }
-                    }
-                }
-
-                if (writeCharacteristic) {
-                    updateBleBadge(true, bleDevice.name || 'Apitor Robot');
-                    appendLog('[BLE] หุ่นยนต์พร้อมรับคำสั่งแล้วจ้า!');
-                } else {
-                    updateBleBadge(true, 'เชื่อมต่อแล้ว (รอตั้งค่า)');
-                }
-            } catch (err) {
-                appendLog(`[BLE] ไม่สามารถเชื่อมต่อได้: ${err.message}`);
-            }
-        }
-
-        function onDisconnected() {
-            writeCharacteristic = null;
-            updateBleBadge(false);
-            appendLog('[BLE] หุ่นยนต์ตัดการเชื่อมต่อแล้ว');
-        }
-
-        function updateBleBadge(connected, name = '') {
-            const badge = document.getElementById('bleStatusBadge');
-            if (connected) {
-                badge.className = 'text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold';
-                badge.innerHTML = `<i class="fa-solid fa-circle text-[8px] mr-1"></i>เชื่อมหุ่นแล้ว: ${name}`;
-            } else {
-                badge.className = 'text-xs px-3 py-1 rounded-full bg-rose-100 text-rose-600 border border-rose-300 font-bold';
-                badge.innerHTML = `<i class="fa-solid fa-circle text-[8px] mr-1"></i>ยังไม่เชื่อมหุ่น`;
-            }
-        }
-
-        async function sendBleActionPacket(action, speed = 70) {
-            const { bytes, formattedHex } = buildApitorPacket(action, speed);
-            if (writeCharacteristic) {
-                try {
-                    if (writeCharacteristic.properties.writeWithoutResponse) {
-                        await writeCharacteristic.writeValueWithoutResponse(bytes);
-                    } else {
-                        await writeCharacteristic.writeValue(bytes);
-                    }
-                    appendLog(`[ส่งคำสั่ง] -> ${formattedHex}`);
-                } catch (e) {
-                    appendLog(`[ส่งไม่ผ่าน] ${e.message}`);
-                }
-            } else {
-                appendLog(`[จำลองส่ง] -> ${formattedHex}`);
-            }
-        }
-
-        function toggleSimMode() {
-            isSimulationMode = !isSimulationMode;
-            const btn = document.getElementById('btnSimMode');
-            if (isSimulationMode) {
-                btn.className = 'btn-chubby px-4 py-2.5 rounded-2xl text-xs font-bold bg-amber-100 text-amber-700 border-2 border-amber-300';
-                btn.innerHTML = '🧪 โหมดจำลอง: เปิด';
-            } else {
-                btn.className = 'btn-chubby px-4 py-2.5 rounded-2xl text-xs font-bold bg-slate-100 text-slate-500 border-2 border-slate-300';
-                btn.innerHTML = '🧪 โหมดจำลอง: ปิด';
-            }
-        }
-
-        // ==========================================
-        // 4. ROBOT SIMULATION & PLAYFUL SOUND
-        // ==========================================
-        const canvas = document.getElementById('robotCanvas');
-        const ctx = canvas.getContext('2d');
-        let robotState = { x: 210, y: 115, angle: -90, ledColor: '#10B981', trail: [] };
-
-        function drawRobotCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Playful grid dots
-            ctx.fillStyle = '#334155';
-            for (let x = 15; x < canvas.width; x += 30) {
-                for (let y = 15; y < canvas.height; y += 30) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-
-            // Path Trail
-            if (robotState.trail.length > 1) {
-                ctx.strokeStyle = '#38BDF8';
-                ctx.lineWidth = 4;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(robotState.trail[0].x, robotState.trail[0].y);
-                for (let p of robotState.trail) ctx.lineTo(p.x, p.y);
-                ctx.stroke();
-            }
-
-            // Robot
-            ctx.save();
-            ctx.translate(robotState.x, robotState.y);
-            ctx.rotate((robotState.angle * Math.PI) / 180);
-
-            // Wheels
-            ctx.fillStyle = '#E2E8F0';
-            ctx.fillRect(-18, -20, 36, 6);
-            ctx.fillRect(-18, 14, 36, 6);
-
-            // Cute Chassis
-            ctx.fillStyle = '#38BDF8';
-            ctx.beginPath();
-            ctx.roundRect(-20, -15, 40, 30, 10);
-            ctx.fill();
-
-            // Eyes / Face
-            ctx.fillStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.arc(10, -6, 4, 0, Math.PI * 2);
-            ctx.arc(10, 6, 4, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#0F172A';
-            ctx.beginPath();
-            ctx.arc(11, -6, 2, 0, Math.PI * 2);
-            ctx.arc(11, 6, 2, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Core Light
-            ctx.fillStyle = robotState.ledColor;
-            ctx.beginPath();
-            ctx.arc(-4, 0, 7, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.restore();
-        }
-
-        function resetCanvas() {
-            robotState = { x: 210, y: 115, angle: -90, ledColor: '#10B981', trail: [{ x: 210, y: 115 }] };
-            drawRobotCanvas();
-        }
-
-        function playCuteSound(freq = 880, type = 'sine', duration = 0.15) {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
-        }
-
-        function animateVirtualRobot(action, speed, durationSec) {
-            if (!isSimulationMode) return;
-            const steps = Math.max(1, Math.round(durationSec * 20));
-            const stepTime = (durationSec * 1000) / steps;
-            let count = 0;
-
-            if (action === 'LED_RED') { robotState.ledColor = '#F43F5E'; setLedIndicator('#F43F5E'); drawRobotCanvas(); playCuteSound(520, 'triangle'); return; }
-            if (action === 'LED_GREEN') { robotState.ledColor = '#10B981'; setLedIndicator('#10B981'); drawRobotCanvas(); playCuteSound(650, 'triangle'); return; }
-            if (action === 'LED_BLUE') { robotState.ledColor = '#3B82F6'; setLedIndicator('#3B82F6'); drawRobotCanvas(); playCuteSound(780, 'triangle'); return; }
-            if (action === 'BEEP') { playCuteSound(880, 'square', 0.25); return; }
-
-            const timer = setInterval(() => {
-                count++;
-                const moveDist = (speed / 100) * 2.4;
-                const rad = (robotState.angle * Math.PI) / 180;
-
-                if (action === 'FORWARD') {
-                    robotState.x = Math.max(25, Math.min(canvas.width - 25, robotState.x + Math.cos(rad) * moveDist));
-                    robotState.y = Math.max(25, Math.min(canvas.height - 25, robotState.y + Math.sin(rad) * moveDist));
-                    robotState.trail.push({ x: robotState.x, y: robotState.y });
-                } else if (action === 'BACKWARD') {
-                    robotState.x = Math.max(25, Math.min(canvas.width - 25, robotState.x - Math.cos(rad) * moveDist));
-                    robotState.y = Math.max(25, Math.min(canvas.height - 25, robotState.y - Math.sin(rad) * moveDist));
-                    robotState.trail.push({ x: robotState.x, y: robotState.y });
-                } else if (action === 'LEFT') {
-                    robotState.angle -= (speed / 100) * 6;
-                } else if (action === 'RIGHT') {
-                    robotState.angle += (speed / 100) * 6;
-                }
-                drawRobotCanvas();
-                if (count >= steps) clearInterval(timer);
-            }, stepTime);
-        }
-
-        function setLedIndicator(color) {
-            const dot = document.getElementById('ledDot');
-            dot.style.backgroundColor = color;
-            dot.style.boxShadow = `0 0 10px ${color}`;
-        }
-
-        // ==========================================
-        // 5. MANUAL CONTROLLER
-        // ==========================================
-        let manualInterval = null;
-
-        document.getElementById('manualSpeed').addEventListener('input', (e) => {
-            document.getElementById('manualSpeedVal').textContent = `${e.target.value}%`;
-        });
-
-        function manualHold(action) {
-            if (manualInterval) clearInterval(manualInterval);
-            const spd = parseInt(document.getElementById('manualSpeed').value, 10) || 70;
-            executeSingleCommand(action, spd, 0.25);
-            playCuteSound(440, 'sine', 0.1);
-            manualInterval = setInterval(() => {
-                executeSingleCommand(action, spd, 0.25);
-            }, 250);
-        }
-
-        function manualRelease() {
-            if (manualInterval) {
-                clearInterval(manualInterval);
-                manualInterval = null;
-                executeSingleCommand('STOP', 0, 0.1);
-            }
-        }
-
-        async function executeSingleCommand(action, speed = 70, duration = 0.5) {
-            document.getElementById('activeActionText').textContent = `${action} (${speed}%)`;
-            await sendBleActionPacket(action, speed);
-            animateVirtualRobot(action, speed, duration);
-        }
-
-        // ==========================================
-        // 6. VISUAL CODING SEQUENCER
-        // ==========================================
-        let commandSequence = [
-            { id: 1, action: 'FORWARD', speed: 70, duration: 1.5 },
-            { id: 2, action: 'RIGHT', speed: 60, duration: 0.8 },
-            { id: 3, action: 'FORWARD', speed: 70, duration: 1.5 },
-            { id: 4, action: 'LED_GREEN', speed: 100, duration: 0.5 },
-            { id: 5, action: 'BEEP', speed: 100, duration: 0.5 }
-        ];
-        let isRunningSequence = false;
-
-        const ACTION_LABELS = {
-            FORWARD: { name: 'เดินหน้า', icon: 'fa-arrow-up', color: 'bg-sky-500' },
-            BACKWARD: { name: 'ถอยหลัง', icon: 'fa-arrow-down', color: 'bg-sky-500' },
-            LEFT: { name: 'เลี้ยวซ้าย', icon: 'fa-rotate-left', color: 'bg-teal-500' },
-            RIGHT: { name: 'เลี้ยวขวา', icon: 'fa-rotate-right', color: 'bg-teal-500' },
-            WAIT: { name: 'รอเวลา', icon: 'fa-hourglass-half', color: 'bg-indigo-500' },
-            LED_RED: { name: 'เปิดไฟสีแดง', icon: 'fa-lightbulb', color: 'bg-rose-500' },
-            LED_GREEN: { name: 'เปิดไฟสีเขียว', icon: 'fa-lightbulb', color: 'bg-emerald-500' },
-            LED_BLUE: { name: 'เปิดไฟสีน้ำเงิน', icon: 'fa-lightbulb', color: 'bg-blue-500' },
-            BEEP: { name: 'ส่งเสียงแตร', icon: 'fa-music', color: 'bg-amber-500' }
-        };
-
-        function renderSequence() {
-            const container = document.getElementById('sequenceContainer');
-            if (commandSequence.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-xs font-bold text-slate-400 border-4 border-dashed border-slate-200 rounded-2xl">ยังไม่มีคำสั่งเลยค่ะ กดปุ่มสีด้านบนเพื่อเริ่มเขียนได้เลย!</div>`;
-                return;
-            }
-
-            container.innerHTML = commandSequence.map((item, idx) => {
-                const meta = ACTION_LABELS[item.action] || { name: item.action, icon: 'fa-cube', color: 'bg-slate-500' };
-                const showSpeed = ['FORWARD', 'BACKWARD', 'LEFT', 'RIGHT'].includes(item.action);
-                return `
-                <div id="seq-step-${idx}" class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-2xl bg-white border-2 border-slate-200 shadow-sm transition">
-                    <div class="flex items-center gap-3">
-                        <span class="w-7 h-7 rounded-full bg-slate-100 text-slate-600 text-xs font-black flex items-center justify-center">${idx + 1}</span>
-                        <div class="w-8 h-8 rounded-xl ${meta.color} text-white flex items-center justify-center shadow">
-                            <i class="fa-solid ${meta.icon}"></i>
-                        </div>
-                        <span class="text-xs font-extrabold text-slate-800">${meta.name}</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        ${showSpeed ? `
-                        <div class="flex items-center gap-1 text-xs font-bold bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
-                            <span class="text-slate-400">แรง:</span>
-                            <input type="number" min="10" max="100" value="${item.speed}" onchange="updateStep(${idx}, 'speed', this.value)" class="w-12 bg-transparent text-center font-black text-sky-600 focus:outline-none">
-                            <span class="text-slate-400">%</span>
-                        </div>` : ''}
-                        <div class="flex items-center gap-1 text-xs font-bold bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
-                            <span class="text-slate-400">เวลา:</span>
-                            <input type="number" step="0.1" min="0.1" max="30" value="${item.duration}" onchange="updateStep(${idx}, 'duration', this.value)" class="w-12 bg-transparent text-center font-black text-amber-600 focus:outline-none">
-                            <span class="text-slate-400">วิ</span>
-                        </div>
-                        <button onclick="removeStep(${idx})" class="w-7 h-7 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </div>`;
-            }).join('');
-        }
-
-        function addStep(action, speed = 70, duration = 1.0) {
-            commandSequence.push({ id: Date.now() + Math.random(), action, speed, duration });
-            renderSequence();
-            playCuteSound(580, 'sine', 0.1);
-        }
-
-        function updateStep(idx, field, val) {
-            if (!commandSequence[idx]) return;
-            commandSequence[idx][field] = parseFloat(val) || 0.5;
-        }
-
-        function removeStep(idx) {
-            commandSequence.splice(idx, 1);
-            renderSequence();
-            playCuteSound(300, 'triangle', 0.1);
-        }
-
-        function clearSequence() {
-            if (isRunningSequence) stopSequence();
-            commandSequence = [];
-            renderSequence();
-        }
-
-        async function runSequence() {
-            if (isRunningSequence || commandSequence.length === 0) return;
-            isRunningSequence = true;
-            appendLog(`[เริ่มรัน] รันคำสั่งทั้งหมด ${commandSequence.length} ขั้นตอน`);
-
-            for (let i = 0; i < commandSequence.length; i++) {
-                if (!isRunningSequence) break;
-                document.querySelectorAll('[id^="seq-step-"]').forEach(el => el.classList.remove('step-active'));
-                const stepEl = document.getElementById(`seq-step-${i}`);
-                if (stepEl) {
-                    stepEl.classList.add('step-active');
-                    stepEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-
-                const step = commandSequence[i];
-                if (step.action !== 'WAIT') {
-                    await executeSingleCommand(step.action, step.speed, step.duration);
-                } else {
-                    document.getElementById('activeActionText').textContent = `รอแป๊บนะ (${step.duration}s)`;
-                }
-
-                await new Promise(r => setTimeout(r, step.duration * 1000));
-
-                if (['FORWARD', 'BACKWARD', 'LEFT', 'RIGHT'].includes(step.action) && isRunningSequence) {
-                    await sendBleActionPacket('STOP', 0);
-                }
-            }
-
-            stopSequence();
-        }
-
-        async function stopSequence() {
-            isRunningSequence = false;
-            document.querySelectorAll('[id^="seq-step-"]').forEach(el => el.classList.remove('step-active'));
-            await sendBleActionPacket('STOP', 0);
-            document.getElementById('activeActionText').textContent = 'พร้อมซิ่งแล้ว!';
-            appendLog('[โปรแกรม] หยุดการทำงานเรียบร้อย');
-        }
-
-        // ==========================================
-        // 7. SAVED PROJECTS
-        // ==========================================
-        function saveCurrentProgramToDB() {
-            const nameInput = document.getElementById('programNameInput');
-            const title = nameInput.value.trim() || `ภารกิจสุดเจ๋ง #${new Date().toLocaleTimeString('th-TH')}`;
-            if (commandSequence.length === 0) {
-                alert('เขียนคำสั่งอย่างน้อย 1 ขั้นตอนก่อนบันทึกนะคะ/ครับ');
-                return;
-            }
-
-            const tx = dbInstance.transaction('programs', 'readwrite');
-            tx.objectStore('programs').add({
-                title: title,
-                steps: JSON.parse(JSON.stringify(commandSequence)),
-                updatedAt: new Date().toLocaleDateString('th-TH')
-            });
-            tx.oncomplete = () => {
-                nameInput.value = '';
-                appendLog(`[บันทึก] บันทึกผลงาน "${title}" เรียบร้อยแล้ว`);
-                loadSavedProgramsFromDB();
-                playCuteSound(880, 'sine', 0.2);
-            };
-        }
-
-        function loadSavedProgramsFromDB() {
-            if (!dbInstance) return;
-            const tx = dbInstance.transaction('programs', 'readonly');
-            const req = tx.objectStore('programs').getAll();
-            req.onsuccess = () => {
-                const list = req.result || [];
-                document.getElementById('savedCountBadge').textContent = `${list.length} เรื่อง`;
-                const container = document.getElementById('savedProgramsList');
-                if (list.length === 0) {
-                    container.innerHTML = `<div class="col-span-2 text-xs font-bold text-slate-400 py-4 text-center">ยังไม่มีผลงานที่บันทึกไว้เลย</div>`;
-                    return;
-                }
-                container.innerHTML = list.map(prog => `
-                    <div class="p-3.5 rounded-2xl bg-purple-50 border-2 border-purple-200 flex items-center justify-between gap-2">
-                        <div>
-                            <div class="text-xs font-black text-purple-900">${prog.title}</div>
-                            <div class="text-[11px] font-bold text-purple-600">${prog.steps.length} ขั้นตอน • ${prog.updatedAt}</div>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <button onclick='loadProgramIntoWorkspace(${JSON.stringify(prog.steps)})' class="btn-chubby px-3 py-1.5 rounded-xl bg-purple-500 text-white text-xs font-bold shadow">
-                                เล่น
-                            </button>
-                            <button onclick="deleteProgramFromDB(${prog.id})" class="p-1.5 text-slate-400 hover:text-rose-500">
-                                <i class="fa-solid fa-trash-can text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            };
-        }
-
-        function loadProgramIntoWorkspace(steps) {
-            commandSequence = steps;
-            renderSequence();
-            appendLog(`[โหลด] โหลด ${steps.length} ขั้นตอนขึ้นกระดานแล้ว`);
-            playCuteSound(660, 'sine', 0.15);
-        }
-
-        function deleteProgramFromDB(id) {
-            const tx = dbInstance.transaction('programs', 'readwrite');
-            tx.objectStore('programs').delete(id);
-            tx.oncomplete = () => loadSavedProgramsFromDB();
-        }
-
-        // ==========================================
-        // 8. GEMINI AI WITH gemini-3.5-flash-lite
-        // ==========================================
-        function quickAiPrompt(text) {
-            document.getElementById('aiPromptInput').value = text;
-            generateCodeWithAI();
-        }
-
-        async function generateCodeWithAI() {
-            const promptText = document.getElementById('aiPromptInput').value.trim();
-            if (!promptText) return;
-
-            if (!appConfig.apiKey) {
-                alert('คุณพ่อคุณแม่ยังไม่ได้ใส่ Gemini API Key ค่ะ รบกวนกดปุ่มรูปฟันเฟืองมุมบนขวาเพื่อใส่คีย์ก่อนนะคะ');
-                requestParentAccess();
-                return;
-            }
-
-            const btn = document.getElementById('btnAiGenerate');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังคิดท่าเต้น...';
-
-            const systemInstruction = `แปลงคำสั่งของผู้ใช้ให้เป็น JSON Array สำหรับควบคุมหุ่นยนต์ Apitor
-แต่ละ Object มีโครงสร้าง: {"action": "FORWARD"|"BACKWARD"|"LEFT"|"RIGHT"|"WAIT"|"LED_RED"|"LED_GREEN"|"LED_BLUE"|"BEEP", "speed": 10-100, "duration": 0.2-10.0}
-ตอบกลับเฉพาะ JSON Array เท่านั้น ห้ามมี Markdown หรือคำอธิบายอื่น`;
-
-            try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${appConfig.apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: `${systemInstruction}\\n\\nคำสั่งผู้ใช้: ${promptText}` }] }]
-                    })
-                });
-
-                const data = await res.json();
-                const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-                const cleanedJson = rawText.replace(/```json|```/g, '').trim();
-                const steps = JSON.parse(cleanedJson);
-
-                if (Array.isArray(steps) && steps.length > 0) {
-                    commandSequence = steps.map((s, i) => ({
-                        id: Date.now() + i,
-                        action: s.action || 'FORWARD',
-                        speed: Number(s.speed) || 70,
-                        duration: Number(s.duration) || 1.0
-                    }));
-                    renderSequence();
-                    appendLog(`[AI] สร้างท่าเต้น ${commandSequence.length} ขั้นตอนเสร็จแล้วจ้า!`);
-                    playCuteSound(880, 'sine', 0.25);
-                }
-            } catch (err) {
-                appendLog(`[AI Error] ขออภัยจ้า ลองใหม่อีกครั้งนะคะ: ${err.message}`);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> สร้างโค้ดให้หนูที!';
-            }
-        }
-
-        // ==========================================
-        // 9. PARENTAL GATE & MODAL HELPERS
-        // ==========================================
-        let currentQuizAnswer = 0;
-
-        function requestParentAccess() {
-            const num1 = Math.floor(Math.random() * 8) + 3;
-            const num2 = Math.floor(Math.random() * 8) + 2;
-            currentQuizAnswer = num1 + num2;
-            document.getElementById('mathQuizQuestion').textContent = `${num1} + ${num2} = ?`;
-            document.getElementById('mathQuizAnswer').value = '';
-            document.getElementById('parentalModal').classList.remove('hidden');
-        }
-
-        function closeParentalModal() {
-            document.getElementById('parentalModal').classList.add('hidden');
-        }
-
-        function verifyParentalAccess() {
-            const userAns = parseInt(document.getElementById('mathQuizAnswer').value, 10);
-            if (userAns === currentQuizAnswer) {
-                closeParentalModal();
-                openSettingsModal();
-            } else {
-                alert('คำตอบยังไม่ถูกต้องนะคะ/ครับ');
-                requestParentAccess();
-            }
-        }
-
-        function openSettingsModal() {
-            document.getElementById('cfgApiKey').value = appConfig.apiKey || '';
-            document.getElementById('cfgServiceUuid').value = appConfig.serviceUuid || '';
-            document.getElementById('cfgCharUuid').value = appConfig.charUuid || '';
-            document.getElementById('cfgHdr1').value = appConfig.header1 || '55';
-            document.getElementById('cfgHdr2').value = appConfig.header2 || 'AA';
-            document.getElementById('cfgInvertMotor').checked = !!appConfig.invertRightMotor;
-            document.getElementById('settingsModal').classList.remove('hidden');
-        }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').classList.add('hidden');
-        }
-
-        function appendLog(msg) {
-            const box = document.getElementById('bleLogBox');
-            const time = new Date().toLocaleTimeString('th-TH');
-            const line = document.createElement('div');
-            line.textContent = `[${time}] ${msg}`;
-            box.appendChild(line);
-            box.scrollTop = box.scrollHeight;
-        }
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            resetCanvas();
-            renderSequence();
-            await initIndexedDB();
-            await loadConfigFromDB();
-            loadSavedProgramsFromDB();
-        });
-    </script>
+      }
+    }
+    updateBleBadge(true, bleDevice.name || 'Apitor/Tudao');
+    showNotice('เชื่อมต่อหุ่นยนต์สำเร็จ!', '🤖');
+  } catch (err) { appendLog('[BLE] ' + err.message); }
+}
+
+function updateBleBadge(connected, name = '') {
+  const b = document.getElementById('bleStatusBadge');
+  b.className = connected ? 'text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold' : 'text-xs px-3 py-1 rounded-full bg-rose-100 text-rose-600 border border-rose-300 font-bold';
+  b.innerHTML = `<i class="fa-solid fa-circle text-[8px] mr-1"></i>${connected ? 'เชื่อมหุ่นแล้ว: '+name : 'ยังไม่เชื่อมหุ่น'}`;
+}
+
+async function transmitCommandPacket(cmd) {
+  const luaLine = stepToLuaCode(cmd).trim();
+  const { bytes, formattedHex } = buildApitorPacketFromCommand(cmd);
+  if (writeCharacteristic) {
+    try {
+      const data = appConfig.protocolMode === 'LUA_STRING' ? new TextEncoder().encode(luaLine + '\n') : bytes;
+      if (writeCharacteristic.properties.writeWithoutResponse) await writeCharacteristic.writeValueWithoutResponse(data);
+      else await writeCharacteristic.writeValue(data);
+      appendLog(`[BLE ส่ง] ${luaLine} | [${formattedHex}]`);
+    } catch (e) { appendLog(`[BLE Error] ${e.message}`); }
+  } else {
+    appendLog(`[Lua] ${luaLine} --> [${formattedHex}]`);
+  }
+}
+
+function toggleSimMode() {
+  isSimulationMode = !isSimulationMode;
+  const btn = document.getElementById('btnSimMode');
+  btn.textContent = isSimulationMode ? '🧪 โหมดจำลอง: เปิด' : '🧪 โหมดจำลอง: ปิด';
+}
+
+// 5. 2D Canvas & Audio Simulation
+const canvas = document.getElementById('robotCanvas'), ctx = canvas.getContext('2d');
+let bgmInterval = null;
+let robotState = { x: 220, y: 115, angle: -90, ledColor: '#10B981', leds: { LED1:'#10B981', LED2:'#10B981', LED3:'#10B981', LED4:'#10B981' }, port3Angle: 0, speechBubble: '', trail: [{x:220,y:115}] };
+
+function updateSensorUI() {
+  document.getElementById('valUltrasound').textContent = document.getElementById('simUltrasound').value + ' cm';
+  document.getElementById('valDistance').textContent = document.getElementById('simDist1').value + '/' + document.getElementById('simDist2').value;
+  document.getElementById('valMic').textContent = document.getElementById('simMic').value + ' dB';
+  document.getElementById('valGyro').textContent = document.getElementById('simGyroX').value + '°/' + document.getElementById('simGyroY').value + '°';
+  drawRobotCanvas();
+}
+
+function getSimulatedSensors() {
+  return {
+    ultrasound: parseFloat(document.getElementById('simUltrasound').value)||25,
+    dist1: parseFloat(document.getElementById('simDist1').value)||30,
+    dist2: parseFloat(document.getElementById('simDist2').value)||40,
+    mic: parseFloat(document.getElementById('simMic').value)||45,
+    gyro_x: parseFloat(document.getElementById('simGyroX').value)||0,
+    gyro_y: parseFloat(document.getElementById('simGyroY').value)||0,
+    trackL: document.getElementById('simTrackL').value||'NO',
+    trackR: document.getElementById('simTrackR').value||'NO'
+  };
+}
+
+function drawRobotCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#334155';
+  for (let x = 20; x < canvas.width; x += 30) for (let y = 20; y < canvas.height; y += 30) { ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2); ctx.fill(); }
+  if (robotState.trail.length > 1) {
+    ctx.strokeStyle = '#38BDF8'; ctx.lineWidth = 3.5; ctx.beginPath();
+    ctx.moveTo(robotState.trail[0].x, robotState.trail[0].y);
+    for (const p of robotState.trail) ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+  ctx.save();
+  ctx.translate(robotState.x, robotState.y);
+  ctx.rotate((robotState.angle * Math.PI) / 180);
+  ctx.fillStyle = '#E2E8F0'; ctx.fillRect(-18, -21, 36, 6); ctx.fillRect(-18, 15, 36, 6);
+  ctx.fillStyle = '#0284C7'; ctx.beginPath(); ctx.roundRect(-22, -16, 44, 32, 10); ctx.fill();
+  [{k:'LED1',x:14,y:-11},{k:'LED2',x:14,y:11},{k:'LED3',x:-14,y:-11},{k:'LED4',x:-14,y:11}].forEach(c => {
+    ctx.fillStyle = robotState.leds[c.k] || '#10B981'; ctx.beginPath(); ctx.arc(c.x, c.y, 3.5, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(10, -5, 3.5, 0, Math.PI*2); ctx.arc(10, 5, 3.5, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function resetCanvas() {
+  if (bgmInterval) { clearInterval(bgmInterval); bgmInterval = null; }
+  robotState = { x: 220, y: 115, angle: -90, ledColor: '#10B981', leds: { LED1:'#10B981', LED2:'#10B981', LED3:'#10B981', LED4:'#10B981' }, port3Angle: 0, speechBubble: '', trail: [{x:220,y:115}] };
+  ['1','2','3','4'].forEach(i => document.getElementById('ledNode'+i).style.backgroundColor = '#10B981');
+  document.getElementById('hudScreenText').textContent = 'จอภาพ: พร้อมทำงาน';
+  document.getElementById('hudScoreText').textContent = '0 : 0';
+  drawRobotCanvas();
+}
+
+function playTone(freq = 880, type = 'sine', duration = 0.2) {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ac.createOscillator(), g = ac.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, ac.currentTime);
+    g.gain.setValueAtTime(0.12, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.01, ac.currentTime + duration);
+    osc.connect(g); g.connect(ac.destination); osc.start(); osc.stop(ac.currentTime + duration);
+  } catch (e) {}
+}
+
+async function executeTudaoCommand(cmd) {
+  await transmitCommandPacket(cmd);
+  if (!isSimulationMode) return;
+  const dur = Number(cmd.duration || cmd.time) || 0.6;
+  if (cmd.type === 'ledcolor') {
+    const c = TUDAO_COLOR_MAP[cmd.color] || TUDAO_COLOR_MAP.COLOR4;
+    robotState.ledColor = c.hex;
+    if (cmd.led === 'ALL') robotState.leds = { LED1:c.hex, LED2:c.hex, LED3:c.hex, LED4:c.hex };
+    else robotState.leds[cmd.led] = c.hex;
+    ['1','2','3','4'].forEach(i => document.getElementById('ledNode'+i).style.backgroundColor = robotState.leds['LED'+i]);
+    drawRobotCanvas(); playTone(620, 'sine', 0.12);
+    return;
+  }
+  if (cmd.type === 'gamut') {
+    const g = TUDAO_GAMUT_FREQ[cmd.gamut] || TUDAO_GAMUT_FREQ['1C'];
+    document.getElementById('hudScreenText').textContent = '🎹 โน้ต: ' + g.label;
+    playTone(g.freq, 'triangle', 0.35); return;
+  }
+  if (cmd.type === 'sound') {
+    const n = parseInt(String(cmd.sound||'1').replace(/\D/g,''),10)||1;
+    playTone(300 + n*65, 'square', 0.25); return;
+  }
+  if (cmd.type === 'bgstart') {
+    document.getElementById('hudScreenText').textContent = '🎵 BGM: ' + (cmd.bgMusic||'BGM_1');
+    playTone(523.25, 'triangle', 0.2); return;
+  }
+  if (cmd.type === 'bgend') {
+    document.getElementById('hudScreenText').textContent = '⏹️ หยุดเพลง BGM'; return;
+  }
+  if (cmd.type === 'say') {
+    const msg = cmd.text || 'สวัสดี';
+    document.getElementById('hudScreenText').textContent = '🗣️ พูด: ' + msg;
+    if ('speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(msg); u.lang = 'th-TH'; window.speechSynthesis.speak(u); }
+    else playTone(540, 'sine', 0.2);
+    return;
+  }
+  if (cmd.type === 'show_text') { document.getElementById('hudScreenText').textContent = '📟 ' + (cmd.content||''); return; }
+  if (cmd.type === 'show_score') { document.getElementById('hudScoreText').textContent = `${cmd.num1??0} : ${cmd.num2??0}`; playTone(750, 'sine', 0.15); return; }
+  if (cmd.type === 'playmovie') { document.getElementById('hudScreenText').textContent = '🎬 วิดีโอ: ' + (cmd.movie||''); return; }
+  if (cmd.type === 'recording') { document.getElementById('hudScreenText').textContent = '🎙️ อัดเสียง: ' + (cmd.edit||''); return; }
+  if (cmd.type === 'motorstop') { document.getElementById('activeActionText').textContent = `หยุด (${cmd.port||'ALL'})`; return; }
+
+  const steps = Math.max(1, Math.round(dur * 20)), stepTime = (dur * 1000) / steps, spd = Number(cmd.speed)||70;
+  let count = 0;
+  const timer = setInterval(() => {
+    count++;
+    const dist = (spd / 100) * 2.3, rad = (robotState.angle * Math.PI) / 180;
+    if (cmd.type === 'drive') {
+      if (cmd.action === 'FORWARD') { robotState.x = Math.max(24, Math.min(canvas.width-24, robotState.x + Math.cos(rad)*dist)); robotState.y = Math.max(24, Math.min(canvas.height-24, robotState.y + Math.sin(rad)*dist)); robotState.trail.push({x:robotState.x,y:robotState.y}); }
+      else if (cmd.action === 'BACKWARD') { robotState.x = Math.max(24, Math.min(canvas.width-24, robotState.x - Math.cos(rad)*dist)); robotState.y = Math.max(24, Math.min(canvas.height-24, robotState.y - Math.sin(rad)*dist)); robotState.trail.push({x:robotState.x,y:robotState.y}); }
+      else if (cmd.action === 'LEFT') robotState.angle -= (spd/100)*5.8;
+      else if (cmd.action === 'RIGHT') robotState.angle += (spd/100)*5.8;
+    } else if (cmd.type === 'motoraction') {
+      const sgn = cmd.direction === 'ANTICLOCKWISE' ? -1 : 1;
+      if (cmd.port === 'PORT1') robotState.angle += sgn * 3.5;
+      else if (cmd.port === 'PORT2') robotState.angle -= sgn * 3.5;
+    }
+    drawRobotCanvas();
+    if (count >= steps) clearInterval(timer);
+  }, stepTime);
+}
+
+// 6. Manual Joypad
+let manualInterval = null;
+function manualHold(action) {
+  if (manualInterval) clearInterval(manualInterval);
+  const spd = parseInt(document.getElementById('manualSpeed').value,10)||70;
+  executeTudaoCommand({ type: 'drive', action, speed: spd, duration: 0.25 });
+  manualInterval = setInterval(() => executeTudaoCommand({ type: 'drive', action, speed: spd, duration: 0.25 }), 250);
+}
+function manualRelease() {
+  if (manualInterval) { clearInterval(manualInterval); manualInterval = null; executeTudaoCommand({ type: 'motorstop', port: 'ALL', duration: 0.1 }); }
+}
+
+// 7. Visual Sequencer & script.js Functions (runCode, generationCode, clearAll, undo, saveWorkspace, loadWorkspace)
+let undoStack = [], isRunningSequence = false;
+let commandSequence = [
+  { id: 1, type: 'ledcolor', led: 'ALL', color: 'COLOR4', duration: 0.4 },
+  { id: 2, type: 'drive', action: 'FORWARD', speed: 75, duration: 1.5 },
+  { id: 3, type: 'motoraction', port: 'PORT3', direction: 'CLOCKWISE', speed: 80, duration: 0.8 },
+  { id: 4, type: 'gamut', gamut: '1C', duration: 0.4 },
+  { id: 5, type: 'gamut', gamut: '3E', duration: 0.4 },
+  { id: 6, type: 'gamut', gamut: '5G', duration: 0.4 },
+  { id: 7, type: 'show_score', num1: 1, num2: 0, duration: 0.5 }
+];
+
+function switchPaletteTab(tabId) {
+  ['motor','led_display','sound_media','control_sensor'].forEach(id => {
+    document.getElementById('palette-'+id).classList.toggle('hidden', id !== tabId);
+    document.getElementById('tab-'+id).className = id === tabId ? 'px-3 py-1.5 rounded-xl text-xs font-black bg-teal-500 text-white' : 'px-3 py-1.5 rounded-xl text-xs font-black bg-slate-100 text-slate-600';
+  });
+}
+
+function pushUndoState() { undoStack.push(JSON.stringify(commandSequence)); if (undoStack.length > 20) undoStack.shift(); }
+function undo() { if (!undoStack.length) return; commandSequence = JSON.parse(undoStack.pop()); renderSequence(); }
+function clearAll() { if (isRunningSequence) stopSequence(); pushUndoState(); commandSequence = []; renderSequence(); }
+function addStep(stepObj) { pushUndoState(); commandSequence.push({ id: Date.now()+Math.random(), ...stepObj }); renderSequence(); playTone(580, 'sine', 0.08); }
+function removeStep(idx) { pushUndoState(); commandSequence.splice(idx, 1); renderSequence(); }
+function updateStep(idx, field, val) { if (commandSequence[idx]) { commandSequence[idx][field] = isNaN(Number(val)) ? val : Number(val); document.getElementById('luaCodePreview').textContent = generateWorkspaceLua(); } }
+
+function renderSequence() {
+  const container = document.getElementById('sequenceContainer');
+  document.getElementById('luaCodePreview').textContent = generateWorkspaceLua();
+  if (!commandSequence.length) {
+    container.innerHTML = '<div class="text-center py-6 text-xs font-bold text-slate-400 border-2 border-dashed rounded-2xl">ยังไม่มีบล็อกคำสั่ง กดปุ่มด้านบนเพื่อเพิ่มคำสั่งได้เลย!</div>';
+    return;
+  }
+  container.innerHTML = commandSequence.map((item, idx) => `
+    <div id="seq-step-${idx}" class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-white border-2 border-slate-200 shadow-sm text-xs font-bold">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-black">${idx+1}</span>
+        ${renderStepFields(item, idx)}
+      </div>
+      <button onclick="removeStep(${idx})" class="w-7 h-7 rounded-xl bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+    </div>`).join('');
+}
+
+function renderStepFields(item, idx) {
+  if (item.type === 'motoraction') return `<span class="px-2 py-1 rounded-lg bg-[#00ceb8] text-white">Tudao_motorAction</span>
+    <select onchange="updateStep(${idx},'port',this.value)" class="border rounded px-1.5 py-0.5"><option value="PORT1" ${item.port==='PORT1'?'selected':''}>PORT1</option><option value="PORT2" ${item.port==='PORT2'?'selected':''}>PORT2</option><option value="PORT3" ${item.port==='PORT3'?'selected':''}>PORT3</option></select>
+    <select onchange="updateStep(${idx},'direction',this.value)" class="border rounded px-1.5 py-0.5"><option value="CLOCKWISE" ${item.direction==='CLOCKWISE'?'selected':''}>CLOCKWISE</option><option value="ANTICLOCKWISE" ${item.direction==='ANTICLOCKWISE'?'selected':''}>ANTICLOCKWISE</option></select>
+    <input type="number" value="${item.speed??70}" onchange="updateStep(${idx},'speed',this.value)" class="w-12 border rounded text-center">%`;
+  if (item.type === 'motorstop') return `<span class="px-2 py-1 rounded-lg bg-teal-700 text-white">Tudao_motorStop</span>
+    <select onchange="updateStep(${idx},'port',this.value)" class="border rounded px-1.5 py-0.5"><option value="ALL" ${item.port==='ALL'?'selected':''}>ALL</option><option value="PORT1" ${item.port==='PORT1'?'selected':''}>PORT1</option><option value="PORT2" ${item.port==='PORT2'?'selected':''}>PORT2</option><option value="PORT3" ${item.port==='PORT3'?'selected':''}>PORT3</option></select>`;
+  if (item.type === 'drive') return `<span class="px-2 py-1 rounded-lg bg-sky-500 text-white">ขับเคลื่อน ${item.action}</span>
+    เร็ว <input type="number" value="${item.speed??70}" onchange="updateStep(${idx},'speed',this.value)" class="w-12 border rounded text-center">% นาน <input type="number" step="0.1" value="${item.duration??1.2}" onchange="updateStep(${idx},'duration',this.value)" class="w-12 border rounded text-center">วิ`;
+  if (item.type === 'ledcolor') return `<span class="px-2 py-1 rounded-lg bg-[#21c0fa] text-white">Tudao_led</span>
+    <select onchange="updateStep(${idx},'led',this.value)" class="border rounded px-1.5 py-0.5"><option value="ALL" ${item.led==='ALL'?'selected':''}>ALL</option><option value="LED1" ${item.led==='LED1'?'selected':''}>LED1</option><option value="LED2" ${item.led==='LED2'?'selected':''}>LED2</option><option value="LED3" ${item.led==='LED3'?'selected':''}>LED3</option><option value="LED4" ${item.led==='LED4'?'selected':''}>LED4</option></select>
+    <select onchange="updateStep(${idx},'color',this.value)" class="border rounded px-1.5 py-0.5">${Object.entries(TUDAO_COLOR_MAP).map(([k,v])=>`<option value="${k}" ${item.color===k?'selected':''}>${v.name}</option>`).join('')}</select>`;
+  if (item.type === 'sound') return `<span class="px-2 py-1 rounded-lg bg-[#21c0fa] text-white">Tudao_playSound</span>
+    <select onchange="updateStep(${idx},'sound',this.value)" class="border rounded px-1.5 py-0.5">${Array.from({length:11},(_,i)=>`SOUND_${i+1}`).map(s=>`<option value="${s}" ${item.sound===s?'selected':''}>${s}</option>`).join('')}</select>`;
+  if (item.type === 'gamut') return `<span class="px-2 py-1 rounded-lg bg-purple-500 text-white">Tudao_gamut</span>
+    <select onchange="updateStep(${idx},'gamut',this.value)" class="border rounded px-1.5 py-0.5">${Object.entries(TUDAO_GAMUT_FREQ).map(([k,v])=>`<option value="${k}" ${item.gamut===k?'selected':''}>${v.label}</option>`).join('')}</select>`;
+  if (item.type === 'bgstart') return `<span class="px-2 py-1 rounded-lg bg-indigo-500 text-white">Tudao_bgmStart</span>
+    <select onchange="updateStep(${idx},'bgMusic',this.value)" class="border rounded px-1.5 py-0.5">${Array.from({length:8},(_,i)=>`BGM_${i+1}`).map(b=>`<option value="${b}" ${item.bgMusic===b?'selected':''}>${b}</option>`).join('')}</select>`;
+  if (item.type === 'bgend') return `<span class="px-2 py-1 rounded-lg bg-slate-600 text-white">Tudao_bgmEnd()</span>`;
+  if (item.type === 'say') return `<span class="px-2 py-1 rounded-lg bg-pink-500 text-white">Tudao_say</span><input type="text" value="${item.text||''}" onchange="updateStep(${idx},'text',this.value)" class="border rounded px-2 py-0.5 w-40">`;
+  if (item.type === 'show_text') return `<span class="px-2 py-1 rounded-lg bg-sky-600 text-white">Tudao_showText</span><input type="text" value="${item.content||''}" onchange="updateStep(${idx},'content',this.value)" class="border rounded px-2 py-0.5 w-40">`;
+  if (item.type === 'show_score') return `<span class="px-2 py-1 rounded-lg bg-amber-500 text-white">Tudao_showScore</span><input type="number" value="${item.num1??0}" onchange="updateStep(${idx},'num1',this.value)" class="w-12 border rounded text-center">:<input type="number" value="${item.num2??0}" onchange="updateStep(${idx},'num2',this.value)" class="w-12 border rounded text-center">`;
+  if (item.type === 'recording') return `<span class="px-2 py-1 rounded-lg bg-rose-500 text-white">Tudao_recording</span><input type="text" value="${item.edit||''}" onchange="updateStep(${idx},'edit',this.value)" class="border rounded px-2 py-0.5 w-36">`;
+  if (item.type === 'playmovie') return `<span class="px-2 py-1 rounded-lg bg-rose-500 text-white">Tudao_playMovie</span><input type="text" value="${item.movie||''}" onchange="updateStep(${idx},'movie',this.value)" class="border rounded px-2 py-0.5 w-36">`;
+  if (item.type === 'sleep') return `<span class="px-2 py-1 rounded-lg bg-[#fbb13b] text-white">Tudao_sleep</span><input type="number" step="0.1" value="${item.time??1.0}" onchange="updateStep(${idx},'time',this.value)" class="w-14 border rounded text-center"> วินาที`;
+  if (item.type === 'if_else') return `<span class="px-2 py-1 rounded-lg bg-amber-600 text-white">if (${item.sensor}) ${item.operator} ${item.threshold}</span>`;
+  if (item.type === 'if_tracking') return `<span class="px-2 py-1 rounded-lg bg-[#5ca3fb] text-white">if Tudao_tracking('${item.left}','${item.right}')</span>`;
+  return `<span>${item.type}</span>`;
+}
+
+function generationCode() {
+  const code = generateWorkspaceLua();
+  window.jsCallJavaInterface.onGenerationCode(code);
+  showNotice('ส่งโค้ด Lua ไปยัง onGenerationCode แล้ว', '🚀');
+  return code;
+}
+
+async function runCode() {
+  if (isRunningSequence || !commandSequence.length) return;
+  isRunningSequence = true;
+  const fullLua = generateWorkspaceLua();
+  window.jsCallJavaInterface.onRunCode(fullLua);
+  for (let i = 0; i < commandSequence.length; i++) {
+    if (!isRunningSequence) break;
+    document.querySelectorAll('[id^="seq-step-"]').forEach(el => el.classList.remove('step-active'));
+    const el = document.getElementById('seq-step-'+i);
+    if (el) el.classList.add('step-active');
+    const step = commandSequence[i];
+    const waitSec = Number(step.duration || step.time) || 0.7;
+    if (step.type === 'if_else') {
+      const s = getSimulatedSensors(), v = s[step.sensor] ?? 25, th = Number(step.threshold)||20;
+      const pass = step.operator === '<' ? v < th : (step.operator === '>' ? v > th : v === th);
+      await executeTudaoCommand({ type: 'drive', action: pass ? 'BACKWARD' : 'FORWARD', speed: 70, duration: 0.8 });
+    } else if (step.type === 'if_tracking') {
+      const s = getSimulatedSensors(), pass = s.trackL === step.left && s.trackR === step.right;
+      await executeTudaoCommand({ type: 'drive', action: pass ? 'FORWARD' : 'LEFT', speed: 65, duration: 0.8 });
+    } else if (step.type !== 'sleep') {
+      await executeTudaoCommand(step);
+    }
+    await new Promise(r => setTimeout(r, waitSec * 1000));
+  }
+  stopSequence();
+}
+
+async function stopSequence() {
+  isRunningSequence = false;
+  document.querySelectorAll('[id^="seq-step-"]').forEach(el => el.classList.remove('step-active'));
+  await transmitCommandPacket({ type: 'motorstop', port: 'ALL' });
+  document.getElementById('activeActionText').textContent = 'พร้อมซิ่งแล้ว!';
+}
+
+function saveWorkspace() {
+  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(commandSequence))));
+  window.jsCallJavaInterface.onSaveCode(b64);
+  return b64;
+}
+function loadWorkspace(b64) {
+  try { commandSequence = JSON.parse(decodeURIComponent(escape(atob(b64)))); renderSequence(); } catch (e) {}
+}
+function copyLuaCode() {
+  navigator.clipboard?.writeText(generateWorkspaceLua());
+  showNotice('คัดลอกโค้ด Tudao Lua เรียบร้อย!', '📋');
+}
+
+// 8. Presets & AI
+function loadPresetMission(key) {
+  pushUndoState();
+  if (key === 'square') commandSequence = [
+    { id:1, type:'ledcolor', led:'ALL', color:'COLOR4', duration:0.4 },
+    { id:2, type:'drive', action:'FORWARD', speed:75, duration:1.2 },
+    { id:3, type:'drive', action:'RIGHT', speed:65, duration:0.75 },
+    { id:4, type:'drive', action:'FORWARD', speed:75, duration:1.2 },
+    { id:5, type:'drive', action:'RIGHT', speed:65, duration:0.75 },
+    { id:6, type:'sound', sound:'SOUND_1', duration:0.5 }
+  ];
+  else if (key === 'concert') commandSequence = [
+    { id:1, type:'bgstart', bgMusic:'BGM_1', duration:0.4 },
+    { id:2, type:'gamut', gamut:'1C', duration:0.4 },
+    { id:3, type:'gamut', gamut:'2D', duration:0.4 },
+    { id:4, type:'gamut', gamut:'3E', duration:0.4 },
+    { id:5, type:'gamut', gamut:'5G', duration:0.5 },
+    { id:6, type:'bgend', duration:0.3 }
+  ];
+  else if (key === 'obstacle') commandSequence = [
+    { id:1, type:'show_text', content:'โหมดหลบสิ่งกีดขวาง', duration:0.5 },
+    { id:2, type:'if_else', sensor:'ultrasound', operator:'<', threshold:20, trueAction:'BACK_BEEP', falseAction:'FORWARD_GREEN', duration:1.0 },
+    { id:3, type:'if_tracking', left:'NO', right:'NO', trueAction:'FORWARD_GREEN', falseAction:'STOP_RED', duration:1.0 }
+  ];
+  else if (key === 'scoreboard') commandSequence = [
+    { id:1, type:'say', text:'สวัสดีเพื่อนๆ เริ่มแข่งกันเลย!', duration:1.2 },
+    { id:2, type:'show_score', num1:3, num2:2, duration:0.8 },
+    { id:3, type:'sound', sound:'SOUND_5', duration:0.6 }
+  ];
+  renderSequence();
+}
+
+async function generateCodeWithAI() {
+  const prompt = document.getElementById('aiPromptInput').value.trim();
+  if (!prompt) return;
+  if (!appConfig.apiKey) {
+    pushUndoState();
+    commandSequence = [
+      { id:1, type:'show_text', content:prompt.slice(0,20), duration:0.5 },
+      { id:2, type:'ledcolor', led:'ALL', color:'COLOR7', duration:0.4 },
+      { id:3, type:'drive', action:'FORWARD', speed:75, duration:1.5 },
+      { id:4, type:'gamut', gamut:'1C', duration:0.4 },
+      { id:5, type:'say', text:prompt, duration:1.2 }
+    ];
+    renderSequence();
+    showNotice('สร้างบล็อกคำสั่งอัตโนมัติเรียบร้อย!', '✨');
+    return;
+  }
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${appConfig.apiKey}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: `แปลงคำสั่งเป็น JSON Array ของบล็อก Tudao (drive, motoraction, motorstop, ledcolor, sound, gamut, say, show_text, show_score, sleep): ${prompt}` }] }] })
+    });
+    const data = await res.json();
+    const raw = (data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]').replace(/```json|```/g,'').trim();
+    const steps = JSON.parse(raw);
+    if (Array.isArray(steps) && steps.length) { pushUndoState(); commandSequence = steps; renderSequence(); }
+  } catch (e) { showNotice('ตรวจสอบ API Key อีกครั้งนะครับ', '⚠️'); }
+}
+
+// 9. Saved Projects & Parental Gate
+function saveCurrentProgramToDB() {
+  const title = document.getElementById('programNameInput').value.trim() || 'โปรเจกต์ Tudao';
+  if (!dbInstance || !commandSequence.length) return;
+  const tx = dbInstance.transaction('programs', 'readwrite');
+  tx.objectStore('programs').add({ title, steps: commandSequence, updatedAt: new Date().toLocaleDateString('th-TH') });
+  tx.oncomplete = () => { document.getElementById('programNameInput').value = ''; loadSavedProgramsFromDB(); showNotice('บันทึกโปรเจกต์แล้ว!', '💾'); };
+}
+function loadSavedProgramsFromDB() {
+  if (!dbInstance) return;
+  const req = dbInstance.transaction('programs', 'readonly').objectStore('programs').getAll();
+  req.onsuccess = () => {
+    const list = req.result || [];
+    document.getElementById('savedCountBadge').textContent = `${list.length} เรื่อง`;
+    document.getElementById('savedProgramsList').innerHTML = list.map(p => `
+      <div class="p-3 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-between">
+        <div><div class="text-xs font-black text-purple-900">${p.title}</div><div class="text-[11px] font-bold text-purple-600">${p.steps.length} บล็อก</div></div>
+        <button onclick='commandSequence=${JSON.stringify(p.steps)};renderSequence();' class="px-3 py-1 rounded-xl bg-purple-500 text-white text-xs font-bold">โหลด</button>
+      </div>`).join('');
+  };
+}
+
+let currentQuizAnswer = 0;
+function requestParentAccess() {
+  const a = Math.floor(Math.random()*8)+3, b = Math.floor(Math.random()*8)+2;
+  currentQuizAnswer = a + b;
+  document.getElementById('mathQuizQuestion').textContent = `${a} + ${b} = ?`;
+  document.getElementById('mathQuizAnswer').value = '';
+  document.getElementById('parentalModal').classList.remove('hidden');
+}
+function closeParentalModal() { document.getElementById('parentalModal').classList.add('hidden'); }
+function verifyParentalAccess() {
+  if (parseInt(document.getElementById('mathQuizAnswer').value,10) === currentQuizAnswer) { closeParentalModal(); document.getElementById('settingsModal').classList.remove('hidden'); }
+  else document.getElementById('mathQuizError').classList.remove('hidden');
+}
+function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); }
+function appendLog(msg) {
+  const box = document.getElementById('bleLogBox'), line = document.createElement('div');
+  line.textContent = `[${new Date().toLocaleTimeString('th-TH')}] ${msg}`;
+  box.appendChild(line); box.scrollTop = box.scrollHeight;
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  resetCanvas(); renderSequence();
+  await initIndexedDB(); loadConfigFromDB(); loadSavedProgramsFromDB();
+});
+</script>
 </body>
 </html>
