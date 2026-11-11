@@ -7,13 +7,10 @@ let dbInstance = null;
 
 const defaultConfig = {
     apiKey: '',
-    protocolMode: 'LUA',
     serviceUuid: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
     charUuid: '6e400002-b5a3-f393-e0a9-e50e24dcca9e',
     portLeft: 'PORT1',
     portRight: 'PORT2',
-    header1: 'AA',
-    header2: '55',
     invertRightMotor: false
 };
 
@@ -53,7 +50,6 @@ async function loadConfigFromDB() {
 
 async function saveConfigToDB() {
     appConfig.apiKey = document.getElementById('cfgApiKey').value.trim();
-    appConfig.protocolMode = document.getElementById('modeHex').checked ? 'HEX' : 'LUA';
     appConfig.serviceUuid = document.getElementById('cfgServiceUuid').value.trim().toLowerCase();
     appConfig.charUuid = document.getElementById('cfgCharUuid').value.trim().toLowerCase();
     appConfig.portLeft = document.getElementById('cfgPortLeft').value;
@@ -63,91 +59,46 @@ async function saveConfigToDB() {
     const tx = dbInstance.transaction('settings', 'readwrite');
     tx.objectStore('settings').put({ id: 'mainConfig', data: appConfig });
     tx.oncomplete = () => {
-        appendLog('[ตั้งค่า] บันทึกข้อมูลและโปรโตคอลลง IndexedDB เรียบร้อย');
+        appendLog('[ตั้งค่า] บันทึกข้อมูลและพอร์ตมอเตอร์ลง IndexedDB เรียบร้อย');
         closeSettingsModal();
     };
 }
 
 // ==========================================
-// 2. TUDAO PROTOCOL BUILDER (LUA & HEX)
+// 2. TUDAO BINARY PROTOCOL ENGINE
 // ==========================================
 /**
- * สร้างคำสั่งตามสถาปัตยกรรม Apitor TUDAO
- * รองรับทั้งข้อความ Lua Script (ค่าเริ่มต้น) และชุด Binary Packet
+ * แปลงชื่อพอร์ตข้อความ ('PORT1', 'PORT2', 'PORT3') เป็นรหัสไบต์ของบอร์ด TUDAO
  */
-function buildTudaoCommand(action, speedPercent = 70) {
+function getPortByte(portStr) {
+    if (portStr === 'PORT2') return 0x02;
+    if (portStr === 'PORT3') return 0x03;
+    return 0x01; // ค่าเริ่มต้น PORT1
+}
+
+/**
+ * สร้างชุดคำสั่งควบคุมมอเตอร์แบบ Binary Packet ของ TUDAO
+ * โครงสร้าง: FF FE 04 01 <Port> <Direction> <Speed> FD FC
+ */
+function makeTudaoMotorPacket(portByte, dirByte, speedPercent) {
     const spd = Math.max(0, Math.min(100, Math.round(speedPercent)));
-    const pL = appConfig.portLeft || 'PORT1';
-    const pR = appConfig.portRight || 'PORT2';
+    return new Uint8Array([0xFF, 0xFE, 0x04, 0x01, portByte, dirByte, spd, 0xFD, 0xFC]);
+}
 
-    if (appConfig.protocolMode === 'LUA') {
-        // โหมด Lua Script ส่งตรงเข้าบอร์ด Nordic_TUDAO
-        let script = "";
-        let cwR = appConfig.invertRightMotor ? 'ANTICLOCKWISE' : 'CLOCKWISE';
-        let ccwR = appConfig.invertRightMotor ? 'CLOCKWISE' : 'ANTICLOCKWISE';
+/**
+ * สร้างชุดคำสั่งควบคุมไฟ LED
+ * โครงสร้าง: FF FE 03 02 <LedIndex> <ColorCode> FD FC
+ */
+function makeTudaoLedPacket(colorCode) {
+    return new Uint8Array([0xFF, 0xFE, 0x03, 0x02, 0x00, colorCode, 0xFD, 0xFC]);
+}
 
-        if (action === 'FORWARD') {
-            script = `Tudao_motorAction('${pL}',${spd},'CLOCKWISE')\nTudao_motorAction('${pR}',${spd},'${cwR}')\n`;
-        } else if (action === 'BACKWARD') {
-            script = `Tudao_motorAction('${pL}',${spd},'ANTICLOCKWISE')\nTudao_motorAction('${pR}',${spd},'${ccwR}')\n`;
-        } else if (action === 'LEFT') {
-            script = `Tudao_motorAction('${pL}',${spd},'ANTICLOCKWISE')\nTudao_motorAction('${pR}',${spd},'${cwR}')\n`;
-        } else if (action === 'RIGHT') {
-            script = `Tudao_motorAction('${pL}',${spd},'CLOCKWISE')\nTudao_motorAction('${pR}',${spd},'${ccwR}')\n`;
-        } else if (action === 'STOP') {
-            script = `Tudao_motorStop('ALL')\n`;
-        } else if (action === 'LED_RED') {
-            script = `Tudao_led('ALL','COLOR1')\n`;
-        } else if (action === 'LED_GREEN') {
-            script = `Tudao_led('ALL','COLOR4')\n`;
-        } else if (action === 'LED_BLUE') {
-            script = `Tudao_led('ALL','COLOR6')\n`;
-        } else if (action === 'BEEP') {
-            script = `Tudao_playSound('SOUND_1')\n`;
-        }
-
-        const encoder = new TextEncoder();
-        const bytes = encoder.encode(script);
-        return { isText: true, text: script, bytes, display: script.trim() };
-    } else {
-        // โหมด Binary Packet พร้อมคำนวณ Checksum
-        const h1 = parseInt(appConfig.header1 || 'AA', 16);
-        const h2 = parseInt(appConfig.header2 || '55', 16);
-        let payload = [];
-
-        if (action === 'FORWARD') {
-            let dR = appConfig.invertRightMotor ? 0x02 : 0x01;
-            payload = [0x08, 0x01, 0x01, spd, dR, spd, 0x00, 0x00];
-        } else if (action === 'BACKWARD') {
-            let dR = appConfig.invertRightMotor ? 0x01 : 0x02;
-            payload = [0x08, 0x01, 0x02, spd, dR, spd, 0x00, 0x00];
-        } else if (action === 'LEFT') {
-            let dR = appConfig.invertRightMotor ? 0x02 : 0x01;
-            payload = [0x08, 0x01, 0x02, spd, dR, spd, 0x00, 0x00];
-        } else if (action === 'RIGHT') {
-            let dR = appConfig.invertRightMotor ? 0x01 : 0x02;
-            payload = [0x08, 0x01, 0x01, spd, dR, spd, 0x00, 0x00];
-        } else if (action === 'STOP') {
-            payload = [0x08, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-        } else if (action === 'LED_RED') {
-            payload = [0x05, 0x02, 0x01, 0x00, 0x00];
-        } else if (action === 'LED_GREEN') {
-            payload = [0x05, 0x02, 0x00, 0x04, 0x00];
-        } else if (action === 'LED_BLUE') {
-            payload = [0x05, 0x02, 0x00, 0x00, 0x06];
-        } else if (action === 'BEEP') {
-            payload = [0x04, 0x03, 0x01, 0x64];
-        } else {
-            payload = [0x08, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
-        }
-
-        let checksum = 0;
-        for (let i = 0; i < payload.length; i++) checksum ^= payload[i];
-
-        const bytes = new Uint8Array([h1, h2, ...payload, checksum]);
-        const hexStr = Array.from(bytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
-        return { isText: false, bytes, display: hexStr };
-    }
+/**
+ * สร้างชุดคำสั่งเสียงดนตรี / แตร
+ * โครงสร้าง: FF FE 03 03 01 <SoundIndex> FD FC
+ */
+function makeTudaoSoundPacket(soundIndex = 0x01) {
+    return new Uint8Array([0xFF, 0xFE, 0x03, 0x03, 0x01, soundIndex, 0xFD, 0xFC]);
 }
 
 // ==========================================
@@ -172,7 +123,7 @@ async function connectBluetooth() {
     }
 
     try {
-        appendLog('[BLE] กำลังมองหาหุ่นยนต์...');
+        appendLog('[BLE] กำลังค้นหาหุ่นยนต์ Nordic_TUDAO...');
         const optionalServices = [...KNOWN_SERVICES];
         if (appConfig.serviceUuid && !optionalServices.includes(appConfig.serviceUuid)) {
             optionalServices.push(appConfig.serviceUuid);
@@ -205,6 +156,12 @@ async function connectBluetooth() {
                         await c.startNotifications();
                         c.addEventListener('characteristicvaluechanged', (event) => {
                             const val = new Uint8Array(event.target.value.buffer);
+
+                            // กรองข้ามแพ็กเก็ตสถานะ Heartbeat/Telemetry (FF FE 06 00 01 ...) ไม่ให้ไหลทับหน้าจอ
+                            if (val.length >= 5 && val[0] === 0xFF && val[1] === 0xFE && val[3] === 0x00 && val[4] === 0x01) {
+                                return;
+                            }
+
                             const hexStr = Array.from(val).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
                             appendLog(`[รับค่าตอบกลับ] <- ${hexStr}`);
                         });
@@ -221,10 +178,10 @@ async function connectBluetooth() {
 
         if (writeCharacteristic) {
             updateBleBadge(true, bleDevice.name || 'Nordic_TUDAO');
-            appendLog(`[BLE] พร้อมส่งคำสั่งผ่าน Characteristic: ${writeCharacteristic.uuid}`);
+            appendLog(`[BLE] เชื่อมต่อสำเร็จ พร้อมส่งคำสั่งควบคุมหุ่นยนต์!`);
         } else {
-            updateBleBadge(true, 'เชื่อมต่อแล้ว (Read-Only)');
-            appendLog('[BLE] เชื่อมต่อสำเร็จแต่ไม่พบ Characteristic ที่เปิดสิทธิ์เขียน');
+            updateBleBadge(true, 'เชื่อมต่อแล้ว (รอตั้งค่า)');
+            appendLog('[BLE] เชื่อมต่อได้แต่ไม่พบ Characteristic สำหรับส่งข้อมูล');
         }
     } catch (err) {
         appendLog(`[BLE Error] ${err.message}`);
@@ -248,21 +205,83 @@ function updateBleBadge(connected, name = '') {
     }
 }
 
+/**
+ * ส่งคำสั่งไปยังหุ่นยนต์ Apitor TUDAO ผ่าน Bluetooth LE
+ */
 async function sendBleActionPacket(action, speed = 70) {
-    const cmd = buildTudaoCommand(action, speed);
-    if (writeCharacteristic) {
-        try {
+    if (!writeCharacteristic) {
+        appendLog(`[จำลองส่ง] -> ${action} (${speed}%)`);
+        return;
+    }
+
+    const pL = getPortByte(appConfig.portLeft || 'PORT1');
+    const pR = getPortByte(appConfig.portRight || 'PORT2');
+
+    // กำหนดทิศทาง: 0x01 = เดินหน้า (CW), 0x02 = ถอยหลัง (CCW), 0x00 = หยุด
+    let dirL = 0x00;
+    let dirR = 0x00;
+    let cwR = appConfig.invertRightMotor ? 0x02 : 0x01;
+    let ccwR = appConfig.invertRightMotor ? 0x01 : 0x02;
+
+    if (action === 'FORWARD') {
+        dirL = 0x01;
+        dirR = cwR;
+    } else if (action === 'BACKWARD') {
+        dirL = 0x02;
+        dirR = ccwR;
+    } else if (action === 'LEFT') {
+        dirL = 0x02;
+        dirR = cwR;
+    } else if (action === 'RIGHT') {
+        dirL = 0x01;
+        dirR = ccwR;
+    } else if (action === 'STOP') {
+        dirL = 0x00;
+        dirR = 0x00;
+        speed = 0;
+    }
+
+    try {
+        if (['FORWARD', 'BACKWARD', 'LEFT', 'RIGHT', 'STOP'].includes(action)) {
+            // ควบคุมมอเตอร์สองพอร์ตพร้อมกัน
+            const pktL = makeTudaoMotorPacket(pL, dirL, speed);
             if (writeCharacteristic.properties.writeWithoutResponse) {
-                await writeCharacteristic.writeValueWithoutResponse(cmd.bytes);
+                await writeCharacteristic.writeValueWithoutResponse(pktL);
             } else {
-                await writeCharacteristic.writeValue(cmd.bytes);
+                await writeCharacteristic.writeValue(pktL);
             }
-            appendLog(`[ส่งคำสั่ง BLE] -> ${cmd.display}`);
-        } catch (e) {
-            appendLog(`[ส่งไม่ผ่าน] ${e.message}`);
+
+            // หน่วงเวลาสั้นๆ 15ms เพื่อความเสถียรของบัฟเฟอร์ BLE ก่อนส่งมอเตอร์ตัวที่ 2
+            await new Promise(r => setTimeout(r, 15));
+
+            const pktR = makeTudaoMotorPacket(pR, dirR, speed);
+            if (writeCharacteristic.properties.writeWithoutResponse) {
+                await writeCharacteristic.writeValueWithoutResponse(pktR);
+            } else {
+                await writeCharacteristic.writeValue(pktR);
+            }
+
+            const hexL = Array.from(pktL).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+            appendLog(`[ส่งมอเตอร์] -> ${action} (L:${hexL})`);
+        } else if (action === 'LED_RED') {
+            const pkt = makeTudaoLedPacket(0x01);
+            await writeCharacteristic.writeValueWithoutResponse(pkt);
+            appendLog(`[ส่งไฟ] -> สีแดง`);
+        } else if (action === 'LED_GREEN') {
+            const pkt = makeTudaoLedPacket(0x04);
+            await writeCharacteristic.writeValueWithoutResponse(pkt);
+            appendLog(`[ส่งไฟ] -> สีเขียว`);
+        } else if (action === 'LED_BLUE') {
+            const pkt = makeTudaoLedPacket(0x06);
+            await writeCharacteristic.writeValueWithoutResponse(pkt);
+            appendLog(`[ส่งไฟ] -> สีน้ำเงิน`);
+        } else if (action === 'BEEP') {
+            const pkt = makeTudaoSoundPacket(0x01);
+            await writeCharacteristic.writeValueWithoutResponse(pkt);
+            appendLog(`[ส่งเสียง] -> SOUND_1`);
         }
-    } else {
-        appendLog(`[จำลองส่ง] -> ${cmd.display}`);
+    } catch (e) {
+        appendLog(`[ส่งไม่ผ่าน] ${e.message}`);
     }
 }
 
@@ -278,7 +297,7 @@ async function sendRawCustomInput() {
     if (!raw) return;
 
     let bytes;
-    let isHex = /^[0-9A-Fa-f\s,]+$/.test(raw) && raw.includes(' ');
+    const isHex = /^[0-9A-Fa-f\s,]+$/.test(raw) && raw.includes(' ');
 
     if (isHex) {
         const cleanTokens = raw.split(/[\s,]+/).filter(Boolean);
@@ -287,7 +306,6 @@ async function sendRawCustomInput() {
             bytes[i] = parseInt(cleanTokens[i], 16) || 0;
         }
     } else {
-        // ถ้าเป็น Text / Lua String ให้แปลง Escape sequence \n
         const unescaped = raw.replace(/\\n/g, '\n').replace(/\\r/g, '\r');
         const encoder = new TextEncoder();
         bytes = encoder.encode(unescaped);
@@ -333,7 +351,7 @@ let robotState = { x: 210, y: 115, angle: -90, ledColor: '#10B981', trail: [] };
 function drawRobotCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Playful grid dots
+    // จุดตารางจำลอง
     ctx.fillStyle = '#334155';
     for (let x = 15; x < canvas.width; x += 30) {
         for (let y = 15; y < canvas.height; y += 30) {
@@ -343,7 +361,7 @@ function drawRobotCanvas() {
         }
     }
 
-    // Path Trail
+    // เส้นรอยวิ่ง
     if (robotState.trail.length > 1) {
         ctx.strokeStyle = '#38BDF8';
         ctx.lineWidth = 4;
@@ -354,23 +372,23 @@ function drawRobotCanvas() {
         ctx.stroke();
     }
 
-    // Robot Body
+    // ตัวหุ่นยนต์
     ctx.save();
     ctx.translate(robotState.x, robotState.y);
     ctx.rotate((robotState.angle * Math.PI) / 180);
 
-    // Wheels
+    // ล้อ
     ctx.fillStyle = '#E2E8F0';
     ctx.fillRect(-18, -20, 36, 6);
     ctx.fillRect(-18, 14, 36, 6);
 
-    // Cute Chassis
+    // ตัวถังหุ่นยนต์
     ctx.fillStyle = '#38BDF8';
     ctx.beginPath();
     ctx.roundRect(-20, -15, 40, 30, 10);
     ctx.fill();
 
-    // Eyes / Face
+    // ดวงตา
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
     ctx.arc(10, -6, 4, 0, Math.PI * 2);
@@ -383,7 +401,7 @@ function drawRobotCanvas() {
     ctx.arc(11, 6, 2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Core Light
+    // ไฟแสดงสถานะตรงกลาง
     ctx.fillStyle = robotState.ledColor;
     ctx.beginPath();
     ctx.arc(-4, 0, 7, 0, Math.PI * 2);
@@ -770,11 +788,6 @@ function verifyParentalAccess() {
 
 function openSettingsModal() {
     document.getElementById('cfgApiKey').value = appConfig.apiKey || '';
-    if (appConfig.protocolMode === 'HEX') {
-        document.getElementById('modeHex').checked = true;
-    } else {
-        document.getElementById('modeLua').checked = true;
-    }
     document.getElementById('cfgServiceUuid').value = appConfig.serviceUuid || '';
     document.getElementById('cfgCharUuid').value = appConfig.charUuid || '';
     document.getElementById('cfgPortLeft').value = appConfig.portLeft || 'PORT1';
